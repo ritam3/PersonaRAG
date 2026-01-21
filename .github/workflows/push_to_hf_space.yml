@@ -2,7 +2,7 @@ name: Sync to Hugging Face Space
 
 on:
   push:
-    branches: [ "main" ]   
+    branches: [ "master" ]   # runs only when master changes
   workflow_dispatch:
 
 jobs:
@@ -12,6 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: master         # ensure we checkout master
           fetch-depth: 0
 
       - name: Push to Hugging Face Space
@@ -23,8 +24,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add HF Space remote (token in URL for auth)
+          git remote remove space 2>/dev/null || true
           git remote add space https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$SPACE_NAME
 
-          # Push GitHub main -> HF main
-          git push space master --force
+          # master -> HF main
+          git push space HEAD:main --force
