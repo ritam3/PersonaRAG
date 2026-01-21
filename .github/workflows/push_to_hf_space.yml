@@ -2,7 +2,7 @@ name: Sync to Hugging Face Space (always strip binaries)
 
 on:
   push:
-    branches: [ "hf-deploy" ]   # CHANGE: branch you deploy FROM (master/main/etc)
+    branches: [ "hf-deploy" ]
   workflow_dispatch:
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: master         # CHANGE: must match the deploy-from branch above
+          ref: hf-deploy         
 
       - name: Create clean snapshot (remove .pkl/.faiss no matter what)
         run: |
