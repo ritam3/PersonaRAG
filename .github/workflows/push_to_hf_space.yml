@@ -1,31 +1,62 @@
-name: Sync to Hugging Face Space
+name: Sync to Hugging Face Space (always strip binaries)
 
 on:
   push:
-    branches: [ "hf-deploy" ]   # runs only when master changes
+    branches: [ "hf-deploy" ]   # CHANGE: branch you deploy FROM (master/main/etc)
   workflow_dispatch:
 
 jobs:
-  push_to_hf:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
-          ref: master         # ensure we checkout master
           fetch-depth: 0
+          ref: master         # CHANGE: must match the deploy-from branch above
 
-      - name: Push to Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_USERNAME: ritup3
-          SPACE_NAME: PersonaRag
+      - name: Create clean snapshot (remove .pkl/.faiss no matter what)
         run: |
+          set -euxo pipefail
+
+          # Export current commit as plain files (no .git history)
+          rm -rf /tmp/snapshot
+          mkdir -p /tmp/snapshot
+          git archive --format=tar HEAD | tar -x -C /tmp/snapshot
+
+          echo "== Files matching .pkl/.faiss BEFORE removal =="
+          (cd /tmp/snapshot && find . -type f \( -name "*.pkl" -o -name "*.faiss" \) -print) || true
+
+          # Always delete these binaries (even if someone committed them)
+          (cd /tmp/snapshot && find . -type f \( -name "*.pkl" -o -name "*.faiss" \) -print -delete) || true
+
+          echo "== Files matching .pkl/.faiss AFTER removal =="
+          (cd /tmp/snapshot && find . -type f \( -name "*.pkl" -o -name "*.faiss" \) -print) || true
+
+          # Ensure they won't be committed into the snapshot repo
+          printf "\n# Never deploy vectorstore binaries to Spaces\n*.pkl\n*.faiss\n" >> /tmp/snapshot/.gitignore
+
+          # Build a new single-commit git repo from the cleaned snapshot
+          cd /tmp/snapshot
+          git init
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Deploy snapshot to HF (binaries stripped)"
 
-          git remote remove space 2>/dev/null || true
+      - name: Push snapshot to Hugging Face Space (HF main)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ritup3          # CHANGE if needed
+          SPACE_NAME: PersonaRag       # CHANGE if needed
+        run: |
+          set -euxo pipefail
+          cd /tmp/snapshot
+
+          # Authenticated remote for HF Space
           git remote add space https://$HF_USERNAME:$HF_TOKEN@huggingface.co/spaces/$HF_USERNAME/$SPACE_NAME
 
-          # master -> HF main
-          git push space HEAD:main --force
+          # Spaces deploy from branch "main"
+          git branch -M main
+          git push space main --force
