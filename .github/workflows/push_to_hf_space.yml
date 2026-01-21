@@ -2,7 +2,7 @@ name: Sync to Hugging Face Space
 
 on:
   push:
-    branches: [ "master" ]   # runs only when master changes
+    branches: [ "hf-deploy" ]   # runs only when master changes
   workflow_dispatch:
 
 jobs:
