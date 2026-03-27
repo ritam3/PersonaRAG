@@ -95,6 +95,27 @@ without the previous turns.
 The rewritten question MUST stay faithful to the user's intent and be about Ritam's
 career, projects, research, or education.
 If the question is already standalone, return it as-is.
+
+Important rules:
+- Preserve the user's original wording for project names, aliases, shorthand references,
+  and distinctive phrases whenever possible.
+- If the user says things like "the improper face one", "that Paytm one", "the PersonaRAG project",
+  or similar shorthand, keep those phrases in the rewritten question rather than replacing them
+  with a paraphrased interpretation.
+- Use chat history only to add missing context, not to overwrite or over-interpret the user's wording.
+- Prefer minimal rewriting. Make the question self-contained, but do not add speculative details.
+- If a follow-up refers to a previously mentioned item, rewrite by naming that item while preserving
+  any distinctive user phrase that helps retrieval.
+
+Good rewrite examples:
+- "explain the improper face one as well"
+  -> "Explain the 'improper face' project as well."
+- "what about the Paytm one?"
+  -> "What about the Paytm-related project?"
+
+Bad rewrite examples:
+- "explain the improper face one as well"
+  -> "What project at Paytm Money involved using image processing and deep learning to alert users about potential issues with their photos?"
 """),
         ("human", """
 Chat history:

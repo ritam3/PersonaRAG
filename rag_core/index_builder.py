@@ -1,7 +1,7 @@
 # rag_core/index_builder.py
 
 import re
-from typing import List
+from typing import Dict, List
 
 import requests
 from langchain_community.document_loaders import OnlinePDFLoader
@@ -69,6 +69,118 @@ def _normalize_label(text: str, max_len: int = 80) -> str:
     # remove characters that would be awkward in metadata keys
     slug = re.sub(r"[^a-z0-9_\-\.]+", "", slug)
     return slug
+
+
+def _normalize_whitespace(text: str) -> str:
+    return " ".join((text or "").split()).strip()
+
+
+def _extract_summary_sentences(text: str, max_sentences: int = 2, max_chars: int = 320) -> str:
+    """
+    Pull 1-2 meaningful sentences from a chunk without using an LLM.
+    """
+    normalized = _normalize_whitespace(text)
+    if not normalized:
+        return ""
+
+    sentences = re.split(r"(?<=[.!?])\s+", normalized)
+    picked: List[str] = []
+    for sentence in sentences:
+        clean = sentence.strip()
+        if len(clean) < 35:
+            continue
+        if clean.lower() in {"project overview", "key highlights"}:
+            continue
+        picked.append(clean)
+        if len(picked) >= max_sentences:
+            break
+
+    if not picked:
+        picked = [normalized[:max_chars].rstrip()]
+
+    summary = " ".join(picked)
+    if len(summary) > max_chars:
+        summary = summary[: max_chars - 3].rstrip() + "..."
+    return summary
+
+
+def _is_project_page(url: str) -> bool:
+    return "/project/" in (url or "").rstrip("/")
+
+
+def _is_noise_header(header: str) -> bool:
+    return _normalize_whitespace(header).lower() in {
+        "",
+        "start of bodystart",
+        "project overview",
+        "key highlights",
+        "more project",
+    }
+
+
+def _derive_page_title(docs_for_page: List) -> str:
+    """
+    Prefer a project title / primary page title over repeated structural headers.
+    """
+    for doc in docs_for_page:
+        metadata = doc.metadata or {}
+        header = _normalize_whitespace(metadata.get("section_header", ""))
+        header2 = _normalize_whitespace(metadata.get("Header 2", ""))
+        if header2.lower() == "more project" and header:
+            return header
+
+    for doc in docs_for_page:
+        metadata = doc.metadata or {}
+        header = _normalize_whitespace(metadata.get("section_header", ""))
+        if _is_noise_header(header):
+            continue
+        if _is_project_page(metadata.get("source", "")) and header.lower() in {
+            "project overview",
+            "key highlights",
+        }:
+            continue
+        return header
+
+    return ""
+
+
+def _build_page_summaries(docs: List) -> None:
+    """
+    Persist planner-friendly page title and summary metadata onto the docs.
+    """
+    docs_by_source: Dict[str, List] = {}
+    for doc in docs:
+        source = (doc.metadata or {}).get("source", "")
+        docs_by_source.setdefault(source, []).append(doc)
+
+    for source, docs_for_page in docs_by_source.items():
+        page_title = _derive_page_title(docs_for_page)
+        summary_parts: List[str] = []
+
+        for doc in docs_for_page:
+            metadata = doc.metadata or {}
+            header = _normalize_whitespace(metadata.get("section_header", ""))
+            header2 = _normalize_whitespace(metadata.get("Header 2", ""))
+            if header.lower() == "project overview" or header2.lower() == "project overview":
+                summary = _extract_summary_sentences(doc.page_content)
+                if summary:
+                    summary_parts.append(summary)
+            elif not summary_parts and header and header == page_title:
+                summary = _extract_summary_sentences(doc.page_content)
+                if summary:
+                    summary_parts.append(summary)
+
+        page_summary = " ".join(summary_parts[:2]).strip()
+        if len(page_summary) > 320:
+            page_summary = page_summary[:317].rstrip() + "..."
+
+        for doc in docs_for_page:
+            metadata = doc.metadata or {}
+            metadata["page_title"] = page_title or metadata.get("section_header", "")
+            if page_summary:
+                metadata["page_summary"] = page_summary
+            metadata["planner_include"] = bool(page_title) and not _is_noise_header(page_title)
+            doc.metadata = metadata
 
 
 def load_web_docs(urls: List[str]):
@@ -193,6 +305,7 @@ def load_web_docs(urls: List[str]):
         except Exception as e:
             print(f"[index_builder] Failed to load PDF from {pdf_url}: {e}")
 
+    _build_page_summaries(docs)
     return docs
 
 
