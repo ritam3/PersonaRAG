@@ -1,12 +1,11 @@
 gradio==5.49.1
-langchain==0.3.12
 python-dotenv==1.0.1
-langchain-core==0.3.28
-langchain-openai==0.2.12
-langchain-community==0.3.12
-langchain-text-splitters==0.3.4
-langchain-groq==0.2.1
+llama-index-core==0.12.52.post1
+llama-index-llms-groq==0.3.1
+llama-index-embeddings-huggingface==0.5.4
+llama-index-vector-stores-faiss==0.3.0
 sentence-transformers==3.3.1
+rank-bm25==0.2.2
 faiss-cpu==1.9.0.post1
 beautifulsoup4==4.12.3
 requests==2.32.3

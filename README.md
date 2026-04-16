@@ -48,10 +48,13 @@ A recruiter usually has limited time. PersonaRag compresses that exploration int
 ## Core Features
 
 - Gradio-based conversational interface for fast deployment and lightweight usage
+- Starter-question dropdown for common recruiter and hiring-manager prompts
 - Website-first indexing over portfolio and project pages
-- FAISS vector store for local retrieval
-- Hybrid retrieval strategy that combines planner-directed scoping with label-aware routing
-- LLM-based retrieval planning over real indexed page titles and summaries
+- LlamaIndex-based indexing and retrieval pipeline
+- FAISS vector store used through LlamaIndex for local retrieval
+- Tool-based routing over strict career sections such as `About`, `Work experience`, `Research Experience`, `Education`, and project pages
+- Tool-description embedding router with exact intent overrides for common question types
+- Hybrid retrieval inside each tool using BM25, vector search, and lexical scoring
 - Follow-up question rewriting with stronger preservation of project aliases and shorthand references
 - Evaluator pass that checks grounding and answer quality
 - Single retry loop that revises weak answers instead of blindly returning first-pass output
@@ -68,19 +71,21 @@ The current indexing pipeline:
 - fetches HTML content from the website
 - splits pages into section-level chunks using HTML headers
 - loads PDFs when present
-- creates dense embeddings with a Hugging Face sentence-transformer
-- stores the resulting chunks in a FAISS index
+- creates dense embeddings with a Hugging Face sentence-transformer through LlamaIndex
+- stores the resulting chunks in a LlamaIndex-managed FAISS index
 
-During indexing, the system also enriches metadata for downstream planning:
-- `page_title`: a cleaned title-level header for the page
-- `page_summary`: a 1-2 sentence heuristic summary extracted from the page content
-- `planner_include`: whether this page should appear in the planner catalog
+During indexing, the system also enriches metadata used later during retrieval:
+- `page_title`: the resolved page title
+- `page_type`: the type of source such as `project_detail`, `projects_index`, or `landing`
+- `project_name`: normalized project identity for project detail pages
+- `section_type`: semantic section label such as `experience`, `research`, `education`, or `projects`
+- `section_label`: page-aware section label for logging and ranking
+- `page_description`, `section_description`, and `chunk_description`: lightweight summaries used by retrieval and debugging
 
-This is important because the planner no longer sees noisy repeated structural headers like `Project Overview` or `Key Highlights` as independent planning targets. Instead, it sees cleaner page-level entries such as:
-- `PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin`
-- `Improper Face Detection At Frontend`
-- `Work experience`
-- `Research Experience`
+This metadata is primarily used for:
+- defining strict tool boundaries
+- improving within-tool retrieval
+- making logs and retrieved sources easier to inspect
 
 ### 2. Question Rewriting
 
@@ -97,46 +102,46 @@ For example, a follow-up like:
 
 should stay close to that wording rather than being transformed into an over-interpreted semantic description that weakens title matching.
 
-### 3. Retrieval Planning
+### 3. Tool Routing
 
-After rewrite, PersonaRag uses an LLM-based retrieval planner.
+After rewrite, PersonaRag chooses which retrieval tool should handle the question.
 
-The planner receives:
-- the user question
-- a catalog of indexed page titles
-- a lightweight summary for each included page
+The current router is intentionally structured in two stages:
+1. exact overrides for obvious intents
+2. semantic routing using embeddings over hand-written tool behavior descriptions
 
-It then produces a structured retrieval plan that can include:
-- a single focused retrieval step
-- multiple section-targeted retrieval steps
-- dependent retrieval flows where a later step builds on an earlier one
+The exact overrides strongly prefer the right tool when the question is explicit. Examples:
+- self-introduction questions prefer `about`
+- company / role / work-history questions prefer `experience`
+- research / paper / publication questions prefer `research`
+- education questions prefer `education`
+- broad portfolio or multi-project questions prefer `projects`
+- exact named project questions prefer `project_detail`
 
-This planning layer is especially important for questions that are:
-- multi-part
-- comparative
-- referential
-- project-specific but phrased casually
+If the question is not explicit enough for an override, the router compares:
+- the user query embedding
+- the embedding of each tool’s behavior description
 
-Examples:
-- "How do you align with prompt engineering roles?"
-- "Tell me about your latest experience and the project behind it."
-- "Explain the improper face one as well."
+This keeps tool choice grounded in intended behavior rather than accidental overlap in page content.
 
-### 4. Scoped Retrieval
+The active tools are:
+- `about`: only the `About` introduction section
+- `experience`: only the `Work experience` section
+- `research`: only the `Research Experience` section
+- `education`: only the `Education` section
+- `projects`: broad portfolio / multi-project questions
+- `project_detail`: a specific named project page
 
-Once a plan is created, the retriever executes it step by step.
+### 4. Retrieval Inside the Chosen Tool
 
-The retrieval behavior is intentionally staged:
-- if the planner identifies explicit page titles, retrieval scopes directly to those pages
-- if the planner does not provide a reliable scope, the system falls back to label-aware routing
-- if label routing is weak, vector retrieval acts as a fallback
+Once a tool is chosen, retrieval happens only inside that tool’s document set.
 
-When a page title is selected, the system does not stop at the title chunk. It expands retrieval to sibling sections from the same page, prioritizing:
-1. `Project Overview`
-2. `Key Highlights`
-3. title / identifying chunks
+Within a tool, PersonaRag uses a hybrid document ranker:
+- BM25 for strong lexical matching
+- LlamaIndex vector retrieval over the FAISS index for semantic matching
+- lexical boosts from section labels and metadata
 
-This is a critical design choice. It allows the system to use the title header to locate the correct page, then use the descriptive page content to answer in detail.
+This means routing answers the question “which section of the portfolio should handle this?”, and retrieval answers the question “which exact chunks inside that section should be shown to the model?”
 
 ### 5. Grounded Answer Generation
 
@@ -203,17 +208,15 @@ The system is designed to preserve those follow-up references and route them to 
 
 ### Retrieval and Planning
 
-- `rag_core/rag_chain.py`: planner-aware retrieval and chain assembly
-- `rag_core/planner.py`: header catalog building, retrieval planning, and entity extraction
-- `rag_core/planner_schema.py`: structured plan and extraction schemas
+- `rag_core/rag_chain.py`: tool definitions, tool-description router, clarification handling, and hybrid retrieval built on top of LlamaIndex retrievers
 - `rag_core/rag_chain_helper.py`: conversational rewrite logic
 
 ### Indexing and Data Preparation
 
-- `rag_core/index_builder.py`: crawling, loading, metadata enrichment, chunking, embedding, and FAISS persistence
+- `rag_core/index_builder.py`: crawling, loading, metadata enrichment, chunking, LlamaIndex document creation, embedding, and FAISS persistence
 - `rag_core/crawler.py`: project-page crawling
 - `rag_core/sources.py`: crawl roots and fixed URLs
-- `rag_core/embeddings_model.py`: embedding model configuration
+- `rag_core/embeddings_model.py`: LlamaIndex embedding model configuration
 
 ### Quality Control
 
@@ -233,9 +236,9 @@ They may:
 
 Because of that, the system does not rely on a single brittle matching method. It combines:
 - conversational rewriting
-- planner-guided page selection
-- scoped retrieval over page-level summaries and titles
-- fallbacks when planning or matching is imperfect
+- intent-aware tool routing
+- hybrid retrieval inside the selected tool
+- clarification when a broad summary and a more specific tool are both plausible
 - evaluator-driven revision
 
 This makes the assistant more useful in real conversations, not just benchmark-style prompt formats.
@@ -244,8 +247,8 @@ This makes the assistant more useful in real conversations, not just benchmark-s
 
 The project includes structured logs that make it possible to inspect:
 - the rewritten question
-- the retrieval plan
-- selected headers or scoped pages
+- ranked tools from the router
+- selected tool or clarification path
 - retrieved sources
 - answer quality evaluation
 - retry behavior when applicable
@@ -283,7 +286,7 @@ By default, the app can rebuild the website index on startup. This behavior is c
 PersonaRag demonstrates more than prompt usage. It shows practical system thinking across:
 - retrieval design
 - metadata-aware indexing
-- LLM planning
+- intent-aware routing
 - grounded answer generation
 - answer evaluation and self-correction
 - deployment-aware application structure

@@ -1,526 +1,976 @@
-# rag_core/rag_chain.py (top of file)
-
-import copy
 import logging
+import math
 import re
-from typing import List, Tuple, Dict, Any
-from langchain.schema import Document, BaseRetriever
-from transformers import pipeline
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from rag_core.planner import (
-    build_header_catalog,
-    entities_to_map,
-    extract_entities_from_docs,
-    plan_retrieval,
+from pydantic import Field
+from llama_index.core.base.response.schema import Response
+from llama_index.core.query_engine import (
+    CustomQueryEngine,
 )
+from llama_index.core.schema import NodeWithScore, TextNode
+from llama_index.core.tools import QueryEngineTool
+from rank_bm25 import BM25Okapi
 
-# ---- Label routing helpers ----
+from rag_core.embeddings_model import get_embeddings
+from rag_core.models_groq import get_answer_llm
 
-# Global zero-shot classifier (loaded once)
-label_classifier = pipeline(
-    "zero-shot-classification",
-    model="facebook/bart-large-mnli"
-)
+
 logger = logging.getLogger("model_flow")
 
-def build_label_vocab(docs: List[Document]) -> List[str]:
-    labels = []
-    seen = set()
-    for d in docs:
-        header = (d.metadata.get("section_header") or "").strip()
-        s_label = (d.metadata.get("section_label") or "").strip()
-        candidates = [header, s_label]
-        for c in candidates:
-            if not c:
-                continue
-            normalized = " ".join(c.split())
-            if len(normalized) > 120:
-                normalized = normalized[:120] + "..."
-            if normalized not in seen:
-                seen.add(normalized)
-                labels.append(normalized)
-    return labels
 
-def map_query_to_labels_zero_shot(
-    query: str,
-    candidate_labels: List[str],
-    top_k: int = 5,
-    score_threshold: float = 0.40,
-) -> List[Tuple[str, float]]:
-    if not candidate_labels:
-        return []
-    out = label_classifier(query, candidate_labels, multi_label=True)
-    labels_out = out["labels"]
-    scores_out = out["scores"]
-    selected: List[Tuple[str, float]] = []
-    for lbl, score in zip(labels_out[:top_k], scores_out[:top_k]):
-        if score >= score_threshold:
-            selected.append((lbl, float(score)))
-    if not selected and labels_out:
-        selected = [(labels_out[0], float(scores_out[0]))]
-    return selected
-
-def fetch_docs_by_labels_with_scores(
-    selected_labels: List[Tuple[str, float]],
-    docs: List[Document],
-) -> List[Tuple[Document, float, List[str]]]:
-    """
-    For each doc, determine which of selected_labels it matches
-    (substring match on section_header / section_label).
-    Return (Document, score, [matched_labels]) where score is max label score.
-    """
-    if not selected_labels:
-        return []
-    label_score: Dict[str, float] = {lbl.lower(): sc for lbl, sc in selected_labels}
-    out: List[Tuple[Document, float, List[str]]] = []
-    for d in docs:
-        header = (d.metadata.get("section_header") or "").lower()
-        s_label = (d.metadata.get("section_label") or "").lower()
-        combined = header + " " + s_label
-
-        matched_labels: List[str] = []
-        matched_scores: List[float] = []
-        for lbl_lower, sc in label_score.items():
-            if lbl_lower and lbl_lower in combined:
-                matched_labels.append(lbl_lower)
-                matched_scores.append(sc)
-
-        if matched_labels:
-            doc_score = max(matched_scores)
-            out.append((d, doc_score, matched_labels))
-    return out
+@dataclass
+class ContextDocument:
+    page_content: str
+    metadata: Dict[str, Any]
 
 
-def _doc_key(doc: Document) -> Tuple[str, str]:
-    return (doc.metadata.get("source"), doc.page_content[:200])
+@dataclass
+class ToolRoutingProfile:
+    name: str
+    description: str
+    profile_text: str
+    tokens: List[str]
 
 
-def _normalize_header_name(value: str) -> str:
-    value = value or ""
-    value = value.lower()
-    value = re.sub(r"\s+", " ", value).strip()
-    return value
+@dataclass
+class RoutingClarification:
+    answer: str
+    candidate_tools: List[str]
+    preferred_tool: str
+    original_question: str
 
 
-def _doc_matches_headers(doc: Document, target_headers: List[str]) -> bool:
-    if not target_headers:
-        return True
+def _doc_key(doc: ContextDocument) -> Tuple[str, str]:
+    return ((doc.metadata or {}).get("source", ""), doc.page_content[:200])
 
+
+def _normalize(value: str) -> str:
+    return re.sub(r"\s+", " ", (value or "").lower()).strip()
+
+
+def _query_tokens(text: str) -> List[str]:
+    tokens = re.findall(r"[a-z0-9]+", (text or "").lower())
+    return [token for token in tokens if len(token) > 2]
+
+
+def _metadata_search_text(doc: ContextDocument) -> str:
     metadata = doc.metadata or {}
-    doc_headers = [
-        _normalize_header_name(metadata.get("section_header", "")),
-        _normalize_header_name(metadata.get("section_label", "")),
+    return " ".join(
+        str(value)
+        for value in [
+            metadata.get("page_title", ""),
+            metadata.get("section_header", ""),
+            metadata.get("section_label", ""),
+            metadata.get("project_name", ""),
+            metadata.get("page_description", ""),
+            metadata.get("project_description", ""),
+            metadata.get("section_description", ""),
+            metadata.get("chunk_description", ""),
+        ]
+        if value
+    )
+
+
+def _lexical_score(query: str, doc: ContextDocument) -> float:
+    query_norm = _normalize(query)
+    tokens = _query_tokens(query_norm)
+    metadata_text = _metadata_search_text(doc)
+    search_text = _normalize(" ".join([metadata_text, doc.page_content[:500]]))
+    title = (doc.metadata or {}).get("page_title", "")
+    header = (doc.metadata or {}).get("section_header", "")
+    label = (doc.metadata or {}).get("section_label", "")
+    project_name = (doc.metadata or {}).get("project_name", "")
+
+    score = 0.0
+    if query_norm and query_norm in search_text:
+        score += 5.0
+
+    for token in tokens:
+        if token in _normalize(title):
+            score += 2.0
+        elif token in _normalize(header):
+            score += 1.8
+        elif token in _normalize(label):
+            score += 1.8
+        elif token in _normalize(project_name):
+            score += 2.2
+        elif token in search_text:
+            score += 0.35
+
+    return score
+
+
+def _response_text(response: Any) -> str:
+    text = getattr(response, "text", None)
+    if text:
+        return text.strip()
+    if hasattr(response, "response"):
+        return str(response.response).strip()
+    return str(response).strip()
+
+
+def _vector_to_doc(node_with_score: Any) -> ContextDocument:
+    node = getattr(node_with_score, "node", node_with_score)
+    metadata = dict(getattr(node, "metadata", {}) or {})
+    text = getattr(node, "text", "") or getattr(node, "get_content", lambda: "")()
+    return ContextDocument(page_content=text, metadata=metadata)
+
+
+def _doc_to_node_with_score(doc: ContextDocument, score: float) -> NodeWithScore:
+    node = TextNode(text=doc.page_content, metadata=dict(doc.metadata or {}))
+    return NodeWithScore(node=node, score=score)
+
+
+def _node_with_score_to_doc(node_with_score: NodeWithScore) -> ContextDocument:
+    node = node_with_score.node
+    return ContextDocument(
+        page_content=getattr(node, "text", "") or node.get_content(),
+        metadata=dict(getattr(node, "metadata", {}) or {}),
+    )
+
+
+def _doc_matches_specific_project(query: str, doc: ContextDocument) -> bool:
+    query_norm = _normalize(query)
+    metadata = doc.metadata or {}
+    candidates = [
+        metadata.get("page_title", ""),
+        metadata.get("project_name", ""),
     ]
-    targets = [_normalize_header_name(header) for header in target_headers if header]
-
-    for target in targets:
-        for doc_header in doc_headers:
-            if not target or not doc_header:
-                continue
-            if target == doc_header or target in doc_header or doc_header in target:
-                return True
-    return False
+    return any(candidate and _normalize(candidate) in query_norm for candidate in candidates)
 
 
-def _filter_docs_by_headers(docs: List[Document], target_headers: List[str]) -> List[Document]:
-    return [doc for doc in docs if _doc_matches_headers(doc, target_headers)]
+class FocusedSectionQueryEngine(CustomQueryEngine):
+    name: str
+    description: str
+    docs: List[ContextDocument] = Field(default_factory=list)
+    llm: Any = Field(exclude=True)
+    vector_retriever: Any = Field(default=None, exclude=True)
+    top_k: int = 4
+    bm25: Any = Field(default=None, exclude=True)
+    bm25_docs: List[ContextDocument] = Field(default_factory=list, exclude=True)
 
+    def _allowed_keys(self) -> set[Tuple[str, str]]:
+        return {_doc_key(doc) for doc in self.docs}
 
-def _header_priority(doc: Document) -> int:
-    metadata = doc.metadata or {}
-    header = _normalize_header_name(metadata.get("section_header", ""))
-    header2 = _normalize_header_name(metadata.get("Header 2", ""))
+    def _vector_candidates(self, query: str) -> List[Tuple[ContextDocument, float]]:
+        if self.vector_retriever is None:
+            return []
 
-    if header == "project overview" or header2 == "project overview":
-        return 0
-    if header == "key highlights" or header2 == "key highlights":
-        return 1
-    if header2 == "more project":
-        return 2
-    if metadata.get("page_title") and _normalize_header_name(metadata.get("page_title")) == header:
-        return 2
-    return 3
-
-
-def _expand_scoped_docs_to_page_context(scoped_docs: List[Document], all_docs: List[Document]) -> List[Document]:
-    """
-    Once a title header identifies the right page, expand to sibling sections on
-    that page so the LLM sees the descriptive chunks, not just the title row.
-    """
-    if not scoped_docs:
-        return []
-
-    sources = []
-    seen_sources = set()
-    for doc in scoped_docs:
-        source = (doc.metadata or {}).get("source")
-        if not source or source in seen_sources:
-            continue
-        seen_sources.add(source)
-        sources.append(source)
-
-    expanded: List[Document] = []
-    seen_keys = set()
-    for source in sources:
-        page_docs = [doc for doc in all_docs if (doc.metadata or {}).get("source") == source]
-        page_docs = sorted(page_docs, key=_header_priority)
-        for doc in page_docs:
+        allowed_keys = self._allowed_keys()
+        candidates: List[Tuple[ContextDocument, float]] = []
+        seen = set()
+        for result in self.vector_retriever.retrieve(query):
+            doc = _vector_to_doc(result)
             key = _doc_key(doc)
-            if key in seen_keys:
+            if key not in allowed_keys or key in seen:
                 continue
-            seen_keys.add(key)
-            expanded.append(doc)
-    return expanded or scoped_docs
+            seen.add(key)
+            candidates.append((doc, float(getattr(result, "score", 0.0) or 0.0)))
+        return candidates
 
+    def _bm25_candidates(self, query: str) -> List[Tuple[ContextDocument, float]]:
+        if self.bm25 is None or not self.bm25_docs:
+            return []
 
-def _annotate_docs(
-    docs: List[Document],
-    query: str,
-    score: float,
-    matched_labels: List[str],
-) -> List[Tuple[Document, float, List[str]]]:
-    annotated: List[Tuple[Document, float, List[str]]] = []
-    for doc in docs:
-        annotated_doc = copy.deepcopy(doc)
-        metadata = annotated_doc.metadata or {}
-        if "retrieval_query" not in metadata:
-            metadata["retrieval_query"] = query
-        if "matched_labels" not in metadata and matched_labels:
-            metadata["matched_labels"] = matched_labels
-        annotated_doc.metadata = metadata
-        annotated.append((annotated_doc, score, matched_labels))
-    return annotated
+        query_tokens = _query_tokens(query)
+        if not query_tokens:
+            return []
 
-
-def _rank_docs_for_query(
-    query: str,
-    candidate_labels: List[str],
-    docs: List[Document],
-    target_headers: List[str],
-    vector_retriever: Any,
-    top_k_labels: int,
-    label_score_threshold: float,
-    vector_fallback_k: int,
-) -> List[Tuple[Document, float, List[str]]]:
-    scoped_docs = _filter_docs_by_headers(docs, target_headers)
-    normalized_query = " ".join((query or "").split())
-    if not normalized_query:
-        logger.info(
-            "retrieval.subquery_skipped | %s",
-            {
-                "subquery": query,
-                "target_headers": target_headers,
-                "reason": "empty_query",
-            },
+        scores = self.bm25.get_scores(query_tokens)
+        ranked = sorted(
+            zip(self.bm25_docs, scores),
+            key=lambda item: float(item[1]),
+            reverse=True,
         )
-        return []
+        return [
+            (doc, float(score))
+            for doc, score in ranked[: max(self.top_k * 2, self.top_k)]
+            if float(score) > 0
+        ]
 
-    # If the planner already scoped to explicit headers, trust that scope first and
-    # rank directly within those docs instead of asking BART to re-select labels.
-    if target_headers and scoped_docs:
-        expanded_docs = _expand_scoped_docs_to_page_context(scoped_docs, docs)
-        logger.info(
-            "retrieval.scoped_header_hits | %s",
-            {
-                "subquery": normalized_query,
-                "target_headers": target_headers,
-                "match_count": len(scoped_docs),
-                "expanded_count": len(expanded_docs),
-                "top_sources": [
-                    (doc.metadata or {}).get("source", "unknown")
-                    for doc in expanded_docs[:3]
-                ],
-            },
+    def _rank_docs(self, query: str) -> List[Tuple[ContextDocument, float]]:
+        combined_scores: Dict[Tuple[str, str], Dict[str, Any]] = {}
+
+        for doc, score in self._bm25_candidates(query):
+            key = _doc_key(doc)
+            entry = combined_scores.setdefault(key, {"doc": doc, "bm25": 0.0, "vector": 0.0, "lexical": 0.0})
+            entry["bm25"] = max(entry["bm25"], float(score))
+
+        for doc, score in self._vector_candidates(query):
+            key = _doc_key(doc)
+            entry = combined_scores.setdefault(key, {"doc": doc, "bm25": 0.0, "vector": 0.0, "lexical": 0.0})
+            entry["vector"] = max(entry["vector"], float(score))
+
+        for doc in self.docs:
+            score = _lexical_score(query, doc)
+            if score <= 0:
+                continue
+            key = _doc_key(doc)
+            entry = combined_scores.setdefault(key, {"doc": doc, "bm25": 0.0, "vector": 0.0, "lexical": 0.0})
+            entry["lexical"] = max(entry["lexical"], float(score))
+
+        if not combined_scores:
+            return [(doc, 0.0) for doc in self.docs[: self.top_k]]
+
+        max_bm25 = max((entry["bm25"] for entry in combined_scores.values()), default=0.0) or 1.0
+        max_vector = max((entry["vector"] for entry in combined_scores.values()), default=0.0) or 1.0
+        max_lexical = max((entry["lexical"] for entry in combined_scores.values()), default=0.0) or 1.0
+
+        ranked: List[Tuple[ContextDocument, float]] = []
+        for entry in combined_scores.values():
+            normalized_bm25 = entry["bm25"] / max_bm25 if entry["bm25"] else 0.0
+            normalized_vector = entry["vector"] / max_vector if entry["vector"] else 0.0
+            normalized_lexical = entry["lexical"] / max_lexical if entry["lexical"] else 0.0
+            final_score = (
+                0.50 * normalized_bm25
+                + 0.35 * normalized_vector
+                + 0.15 * normalized_lexical
+            )
+            ranked.append((entry["doc"], final_score))
+
+        ranked.sort(key=lambda item: item[1], reverse=True)
+        return ranked[: self.top_k]
+
+    def custom_query(self, query_str: str) -> Response:
+        ranked_docs = self._rank_docs(query_str)
+        context_docs = [doc for doc, _score in ranked_docs]
+        source_nodes = [_doc_to_node_with_score(doc, score) for doc, score in ranked_docs]
+
+        if not context_docs:
+            return Response(
+                response="I don't know based on my current retrieved context.",
+                source_nodes=[],
+                metadata={"tool": self.name},
+            )
+
+        context_block = "\n\n".join(
+            f"[DOC {idx}] source={(doc.metadata or {}).get('source', 'unknown')} | "
+            f"header={(doc.metadata or {}).get('section_header', 'unknown')}\n"
+            f"{doc.page_content}"
+            for idx, doc in enumerate(context_docs, start=1)
         )
-        return _annotate_docs(
-            expanded_docs,
-            query=normalized_query,
-            score=1.0,
-            matched_labels=target_headers,
+
+        prompt = (
+            "You are answering a focused question about Ritam's background.\n"
+            f"Focus area: {self.description}\n\n"
+            "Rules:\n"
+            "- Answer in first person as Ritam.\n"
+            "- Use ONLY the provided context.\n"
+            '- If the context is insufficient, say "I don\'t know".\n'
+            "- Keep the answer concise and specific.\n\n"
+            f"Question:\n{query_str}\n\n"
+            f"Context:\n{context_block}\n\n"
+            "Answer:"
         )
 
-    scoped_labels = build_label_vocab(scoped_docs) if scoped_docs else []
-    mapped = map_query_to_labels_zero_shot(
-        normalized_query,
-        scoped_labels or candidate_labels,
-        top_k=top_k_labels,
-        score_threshold=label_score_threshold,
-    )
-    logger.info(
-        "retrieval.subquery_labels | %s",
-        {
-            "subquery": query,
-            "target_headers": target_headers,
-            "selected_labels": [
-                {"label": label, "score": round(score, 4)}
-                for label, score in mapped
-            ],
-        },
-    )
-    ranked = fetch_docs_by_labels_with_scores(mapped, scoped_docs or docs)
-    if ranked:
-        logger.info(
-            "retrieval.subquery_hits | %s",
-            {
-                "subquery": query,
-                "match_count": len(ranked),
-                "top_sources": [
-                    (doc.metadata or {}).get("source", "unknown")
-                    for doc, _, _ in ranked[:3]
-                ],
-            },
+        answer = _response_text(self.llm.complete(prompt))
+        return Response(
+            response=answer,
+            source_nodes=source_nodes,
+            metadata={"tool": self.name},
         )
-        return sorted(ranked, key=lambda item: item[1], reverse=True)
 
-    if vector_retriever is None:
-        logger.info(
-            "retrieval.subquery_no_hits | %s",
-            {"subquery": query, "fallback": "none"},
-        )
-        return []
 
-    try:
-        vector_docs = vector_retriever.get_relevant_documents(normalized_query)
-    except Exception:
-        logger.exception(
-            "retrieval.subquery_vector_error | %s",
-            {"subquery": query},
-        )
-        return []
+SYSTEM_PROMPT = """
+You are Ritam's personal QA bot.
 
-    filtered_vector_docs = _filter_docs_by_headers(vector_docs, target_headers)
-    fallback_docs = filtered_vector_docs or vector_docs
+You will receive:
+- `context`: retrieved sections from Ritam's portfolio, project pages, and career materials.
+- `chat_history`: prior conversation turns for follow-up understanding only.
 
-    logger.info(
-        "retrieval.subquery_vector_fallback | %s",
-        {
-            "subquery": query,
-            "target_headers": target_headers,
-            "fallback_count": min(len(fallback_docs), vector_fallback_k),
-            "top_sources": [
-                (doc.metadata or {}).get("source", "unknown")
-                for doc in fallback_docs[:vector_fallback_k]
-            ],
-        },
-    )
-    return _annotate_docs(
-        fallback_docs[:vector_fallback_k],
-        query=query,
-        score=0.0,
-        matched_labels=[],
-    )
+Rules:
+- Answer in first person as Ritam.
+- Use ONLY the provided context for factual claims.
+- If the answer is not clearly supported by the context, say "I don't know".
+- If the user asks something unrelated to Ritam's career, projects, research, or education,
+  politely refuse and ask them to keep the conversation career-related.
+- Prefer concise, evidence-backed answers.
+""".strip()
 
-class LabelRoutingRetriever(BaseRetriever):
-    """
-    Retriever that:
-      1) Uses BART-MNLI to map query -> section labels.
-      2) Fetches all docs whose header/label match those labels.
-      3) Ranks docs by label confidence.
-      4) Falls back to vector retriever if no labels match.
-    """
 
-    docs: List[Document]
-    vector_retriever: Any = None
-    top_k_labels: int = 5
-    label_score_threshold: float = 0.35
-    k_docs: int = 6
-    vector_fallback_k: int = 2
-
-    class Config:
-        arbitrary_types_allowed = True
+class LlamaIndexToolRAGChainCompat:
+    ROUTING_CONFIDENCE_THRESHOLD = 0.50
+    CLARIFICATION_SCORE_GAP = 0.10
 
     def __init__(
         self,
-        docs: List[Document],
-        vector_retriever: Any = None,
-        top_k_labels: int = 5,
-        label_score_threshold: float = 0.35,
-        k_docs: int = 6,
-        vector_fallback_k: int = 2,
-        **kwargs,
-    ):
-        super().__init__(
-            docs=docs,
-            vector_retriever=vector_retriever,
-            top_k_labels=top_k_labels,
-            label_score_threshold=label_score_threshold,
-            k_docs=k_docs,
-            vector_fallback_k=vector_fallback_k,
-            **kwargs,
+        tools: Sequence[QueryEngineTool],
+        tool_profiles: Sequence[ToolRoutingProfile],
+        system_prompt: str,
+        project_titles: Sequence[str] | None = None,
+    ) -> None:
+        self.tools = list(tools)
+        self.tool_map = {tool.metadata.name: tool.query_engine for tool in self.tools}
+        self.tool_profiles = list(tool_profiles)
+        self.system_prompt = system_prompt
+        self.project_titles = [
+            _normalize(title)
+            for title in (project_titles or [])
+            if _normalize(title)
+        ]
+
+        bm25_corpus = [profile.tokens for profile in self.tool_profiles if profile.tokens]
+        self.routing_profiles_for_bm25 = [
+            profile for profile in self.tool_profiles if profile.tokens
+        ]
+        self.routing_bm25 = BM25Okapi(bm25_corpus) if bm25_corpus else None
+        self.tool_profile_map = {profile.name: profile for profile in self.tool_profiles}
+        self.routing_embed_model = None
+        self.tool_profile_embeddings: Dict[str, List[float]] = {}
+
+        try:
+            self.routing_embed_model = get_embeddings()
+            for profile in self.tool_profiles:
+                if not profile.profile_text.strip():
+                    continue
+                self.tool_profile_embeddings[profile.name] = self.routing_embed_model.get_text_embedding(
+                    profile.profile_text
+                )
+        except Exception as exc:
+            logger.warning(
+                "retrieval.router_embeddings_unavailable | %s",
+                {"error": str(exc)},
+            )
+            self.routing_embed_model = None
+            self.tool_profile_embeddings = {}
+
+    @staticmethod
+    def _embedding_similarity(left: Sequence[float], right: Sequence[float]) -> float:
+        if not left or not right:
+            return 0.0
+        return float(sum(float(a) * float(b) for a, b in zip(left, right)))
+
+    @staticmethod
+    def _is_about_self_query(question: str) -> bool:
+        q = _normalize(question)
+        direct_phrases = [
+            "about yourself",
+            "about you",
+            "introduce yourself",
+            "who are you",
+            "your profile",
+            "background summary",
+            "summary about you",
+        ]
+        if any(phrase in q for phrase in direct_phrases):
+            return True
+
+        return bool(
+            re.search(r"\btell me about (you|yourself)\b", q)
+            or re.search(r"\bcan you introduce yourself\b", q)
         )
 
-    def get_relevant_documents(self, query: str) -> List[Document]:
-        candidate_labels = build_label_vocab(self.docs)
-        header_catalog = build_header_catalog(self.docs)
-        plan = plan_retrieval(query, header_catalog)
-        logger.info(
-            "retrieval.plan | %s",
-            {
-                "query": query,
-                "strategy": plan.strategy,
-                "reasoning": plan.reasoning,
-                "steps": [step.dict() for step in plan.steps],
-                "candidate_label_count": len(candidate_labels),
-            },
+    @staticmethod
+    def _contains_any(question: str, phrases: Sequence[str]) -> bool:
+        q = _normalize(question)
+        return any(phrase in q for phrase in phrases)
+
+    def _has_project_title_match(self, question: str) -> bool:
+        q = _normalize(question)
+        return any(title and title in q for title in self.project_titles)
+
+    def _route_overrides(self, question: str) -> Dict[str, float]:
+        q = _normalize(question)
+        boosts: Dict[str, float] = {}
+
+        def boost(tool_name: str, value: float) -> None:
+            boosts[tool_name] = max(boosts.get(tool_name, 0.0), value)
+
+        if self._is_about_self_query(q):
+            boost("about", 1.0)
+
+        if self._has_project_title_match(q):
+            boost("project_detail", 1.0)
+
+        if self._contains_any(
+            q,
+            [
+                "project",
+                "projects",
+                "portfolio",
+                "built",
+                "build",
+                "worked on",
+                "latest works",
+            ],
+        ):
+            boost("projects", 0.85)
+
+        if self._contains_any(
+            q,
+            [
+                "company",
+                "companies",
+                "employer",
+                "employers",
+                "role",
+                "roles",
+                "work experience",
+                "career history",
+                "time at",
+                "worked at",
+                "juniper",
+                "paytm",
+                "mist",
+                "internship",
+                "full time",
+            ],
+        ):
+            boost("experience", 0.9)
+
+        if self._contains_any(
+            q,
+            [
+                "research",
+                "paper",
+                "papers",
+                "publication",
+                "publications",
+                "lab",
+                "acl",
+            ],
+        ):
+            boost("research", 0.9)
+
+        if self._contains_any(
+            q,
+            [
+                "education",
+                "degree",
+                "degrees",
+                "university",
+                "universities",
+                "college",
+                "coursework",
+                "academic background",
+                "asu",
+            ],
+        ):
+            boost("education", 0.9)
+
+        if not self._is_about_self_query(q):
+            boosts["about"] = 0.0
+
+        return boosts
+
+    def _route_tool_scores(self, question: str) -> List[Tuple[str, float]]:
+        query_tokens = _query_tokens(question)
+        overrides = self._route_overrides(question)
+        combined_scores: Dict[str, Dict[str, float]] = {
+            profile.name: {"bm25": 0.0, "embedding": 0.0, "lexical": 0.0}
+            for profile in self.tool_profiles
+        }
+
+        if self.routing_bm25 is not None and query_tokens:
+            bm25_scores = self.routing_bm25.get_scores(query_tokens)
+            for profile, score in zip(self.routing_profiles_for_bm25, bm25_scores):
+                combined_scores[profile.name]["bm25"] = float(score)
+
+        if self.routing_embed_model is not None and self.tool_profile_embeddings:
+            try:
+                query_embedding = self.routing_embed_model.get_query_embedding(question)
+                for profile in self.tool_profiles:
+                    profile_embedding = self.tool_profile_embeddings.get(profile.name)
+                    if not profile_embedding:
+                        continue
+                    combined_scores[profile.name]["embedding"] = max(
+                        0.0,
+                        self._embedding_similarity(query_embedding, profile_embedding),
+                    )
+            except Exception as exc:
+                logger.warning(
+                    "retrieval.router_query_embedding_failed | %s",
+                    {"error": str(exc)},
+                )
+
+        query_norm = _normalize(question)
+        for profile in self.tool_profiles:
+            profile_text_norm = _normalize(profile.profile_text)
+            lexical = 0.0
+            if query_norm and query_norm in profile_text_norm:
+                lexical += 4.0
+            for token in query_tokens:
+                if token in profile.tokens:
+                    lexical += 1.0
+                elif token in profile_text_norm:
+                    lexical += 0.25
+            combined_scores[profile.name]["lexical"] = lexical
+
+        max_bm25 = max((scores["bm25"] for scores in combined_scores.values()), default=0.0) or 1.0
+        max_embedding = max((scores["embedding"] for scores in combined_scores.values()), default=0.0) or 1.0
+        max_lexical = max((scores["lexical"] for scores in combined_scores.values()), default=0.0) or 1.0
+
+        raw_ranked: List[Tuple[str, float]] = []
+        for profile in self.tool_profiles:
+            scores = combined_scores[profile.name]
+            semantic_score = (
+                0.35 * (scores["bm25"] / max_bm25 if scores["bm25"] else 0.0)
+                + 0.50 * (scores["embedding"] / max_embedding if scores["embedding"] else 0.0)
+                + 0.15 * (scores["lexical"] / max_lexical if scores["lexical"] else 0.0)
+            )
+            override_score = overrides.get(profile.name, 0.0)
+            if profile.name == "about" and not self._is_about_self_query(question):
+                semantic_score = 0.0
+            final = max(semantic_score, override_score)
+            raw_ranked.append((profile.name, final))
+
+        temperature = 3.0
+        exp_scores = {
+            tool_name: math.exp(score * temperature)
+            for tool_name, score in raw_ranked
+        }
+        score_total = sum(exp_scores.values()) or 1.0
+        ranked = [
+            (tool_name, exp_scores[tool_name] / score_total)
+            for tool_name, _score in raw_ranked
+        ]
+        ranked.sort(key=lambda item: item[1], reverse=True)
+        return ranked
+
+    def _high_confidence_tools(
+        self,
+        ranked_tools: Sequence[Tuple[str, float]],
+        threshold: float | None = None,
+    ) -> List[Tuple[str, float]]:
+        min_score = self.ROUTING_CONFIDENCE_THRESHOLD if threshold is None else threshold
+        selected = [
+            (tool_name, score)
+            for tool_name, score in ranked_tools
+            if score >= min_score
+        ]
+        return selected or list(ranked_tools[:1])
+
+    def _is_multi_part_query(self, question: str, ranked_tools: Sequence[Tuple[str, float]]) -> bool:
+        q = _normalize(question)
+        multi_markers = [
+            " and ",
+            " also ",
+            " as well as ",
+            " along with ",
+            " compare ",
+            " compared to ",
+            " versus ",
+            " vs ",
+            " both ",
+            " difference ",
+        ]
+        has_multi_marker = any(marker in q for marker in multi_markers)
+        if len(ranked_tools) < 2:
+            return False
+
+        top_score = ranked_tools[0][1]
+        second_score = ranked_tools[1][1]
+        if has_multi_marker and second_score >= max(0.35, top_score * 0.65):
+            return True
+        return False
+
+    def _tool_display_name(self, tool_name: str) -> str:
+        labels = {
+            "about": "a broader background summary",
+            "experience": "work experience",
+            "projects": "projects",
+            "education": "education",
+            "research": "research",
+            "project_detail": "a specific project",
+        }
+        return labels.get(tool_name, tool_name.replace("_", " "))
+
+    def _clarification_prompt(
+        self,
+        broad_tool: str,
+        specific_tool: str,
+        ranked_tools: Sequence[Tuple[str, float]],
+    ) -> str:
+        specific_label = self._tool_display_name(specific_tool)
+        broad_label = self._tool_display_name(broad_tool)
+        del ranked_tools
+        return (
+            f"Do you want {specific_label} specifically, or {broad_label}? "
+            f"Reply with something short like '{specific_tool.replace('_', ' ')}' or 'broader summary'."
         )
 
-        step_outputs: Dict[str, Any] = {}
-        extracted_values: Dict[str, str] = {}
-        docs_with_scores: List[Tuple[Document, float, List[str]]] = []
-        ranked_groups: List[List[Tuple[Document, float, List[str]]]] = []
+    def _maybe_build_clarification(
+        self,
+        question: str,
+        ranked_tools: Sequence[Tuple[str, float]],
+    ) -> Optional[RoutingClarification]:
+        if len(ranked_tools) < 2:
+            return None
 
-        for step in plan.steps:
-            if step.action == "extract":
-                source_docs = step_outputs.get(step.depends_on, [])
-                entities = extract_entities_from_docs(source_docs, step.extract_fields)
-                extracted_map = entities_to_map(entities)
-                extracted_values.update({key: value for key, value in extracted_map.items() if value})
-                step_outputs[step.step_id] = entities
+        top_tool, top_score = ranked_tools[0]
+        second_tool, second_score = ranked_tools[1]
+        if top_tool != "about" or second_tool == "about":
+            return None
+
+        score_gap = top_score - second_score
+        if score_gap > self.CLARIFICATION_SCORE_GAP and second_score < top_score * 0.82:
+            return None
+
+        return RoutingClarification(
+            answer=self._clarification_prompt(
+                broad_tool=top_tool,
+                specific_tool=second_tool,
+                ranked_tools=ranked_tools,
+            ),
+            candidate_tools=[second_tool, top_tool],
+            preferred_tool=second_tool,
+            original_question=question,
+        )
+
+    def _select_tool_name(self, ranked_tools: Sequence[Tuple[str, float]]) -> str:
+        for tool_name, _score in ranked_tools:
+            if tool_name in self.tool_map:
+                return tool_name
+        return "about"
+
+    def _select_tool_names_for_multi(
+        self,
+        ranked_tools: Sequence[Tuple[str, float]],
+    ) -> List[str]:
+        if not ranked_tools:
+            return ["about"]
+
+        top_score = ranked_tools[0][1]
+        selected = [
+            tool_name
+            for tool_name, score in ranked_tools[:3]
+            if tool_name in self.tool_map and score >= max(0.35, top_score * 0.65)
+        ]
+        return selected or [self._select_tool_name(ranked_tools)]
+
+    def _run_tool(self, tool_name: str, question: str) -> Response:
+        query_engine = self.tool_map[tool_name]
+        return query_engine.query(question)
+
+    def resolve_clarification_reply(
+        self,
+        reply: str,
+        candidate_tools: Sequence[str],
+        preferred_tool: str,
+    ) -> str:
+        reply_norm = _normalize(reply)
+        specific_markers = {
+            "yes",
+            "yep",
+            "yeah",
+            "specific",
+            "specifically",
+            "detailed",
+            "detail",
+            "that one",
+        }
+        broad_markers = {
+            "broad",
+            "broader",
+            "summary",
+            "overview",
+            "general",
+            "background",
+        }
+
+        if reply_norm in specific_markers or any(marker in reply_norm for marker in specific_markers):
+            return preferred_tool
+        if any(marker in reply_norm for marker in broad_markers):
+            for tool_name in candidate_tools:
+                if tool_name == "about":
+                    return tool_name
+
+        filtered_ranked = [
+            (tool_name, score)
+            for tool_name, score in self._route_tool_scores(reply)
+            if tool_name in candidate_tools
+        ]
+        if filtered_ranked:
+            return filtered_ranked[0][0]
+        return preferred_tool
+
+    def _combine_tool_responses(
+        self,
+        responses: Sequence[Response],
+        question: str,
+    ) -> Response:
+        source_nodes: List[NodeWithScore] = []
+        seen = set()
+        partials: List[str] = []
+        for response in responses:
+            answer_text = _response_text(response)
+            if answer_text:
+                partials.append(answer_text)
+            for node in getattr(response, "source_nodes", []) or []:
+                doc = _node_with_score_to_doc(node)
+                key = _doc_key(doc)
+                if key in seen:
+                    continue
+                seen.add(key)
+                source_nodes.append(node)
+
+        if not source_nodes:
+            return Response(
+                response="I don't know based on my current retrieved context.",
+                source_nodes=[],
+                metadata={"engine": "manual_multi"},
+            )
+
+        context_docs = [_node_with_score_to_doc(node) for node in source_nodes]
+        context_block = "\n\n".join(
+            f"[DOC {idx}] source={(doc.metadata or {}).get('source', 'unknown')} | "
+            f"header={(doc.metadata or {}).get('section_header', 'unknown')}\n"
+            f"{doc.page_content}"
+            for idx, doc in enumerate(context_docs, start=1)
+        )
+        partial_block = "\n\n".join(
+            f"[PARTIAL {idx}] {text}" for idx, text in enumerate(partials, start=1)
+        )
+
+        prompt = (
+            f"{self.system_prompt}\n\n"
+            f"Question:\n{question}\n\n"
+            f"Partial answers from specialized tools:\n{partial_block}\n\n"
+            f"Context:\n{context_block}\n\n"
+            "Synthesize a final answer that directly answers the question."
+        )
+        final_answer = _response_text(get_answer_llm().complete(prompt))
+        return Response(
+            response=final_answer,
+            source_nodes=source_nodes,
+            metadata={"engine": "manual_multi"},
+        )
+
+    def invoke(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        question = payload.get("input", "")
+        forced_tool = payload.get("forced_tool")
+        ranked_tools = self._route_tool_scores(question)
+        if forced_tool in self.tool_map:
+            response = self._run_tool(forced_tool, question)
+            engine_used = f"forced_router:{forced_tool}"
+        else:
+            clarification = self._maybe_build_clarification(question, ranked_tools)
+            if clarification is not None:
+                high_confidence_tools = self._high_confidence_tools(ranked_tools)
                 logger.info(
-                    "retrieval.extract_step | %s",
+                    "retrieval.router_clarification | %s",
                     {
-                        "step_id": step.step_id,
-                        "depends_on": step.depends_on,
-                        "fields": step.extract_fields,
-                        "entities": entities.dict(),
+                        "query": question,
+                        "ranked_tools": ranked_tools,
+                        "high_confidence_tools": high_confidence_tools,
+                        "candidate_tools": clarification.candidate_tools,
                     },
                 )
-                continue
+                return {
+                    "answer": clarification.answer,
+                    "context": [],
+                    "needs_clarification": True,
+                    "candidate_tools": clarification.candidate_tools,
+                    "preferred_tool": clarification.preferred_tool,
+                    "original_question": clarification.original_question,
+                    "ranked_tools": high_confidence_tools,
+                }
+            if self._is_multi_part_query(question, ranked_tools):
+                selected_tool_names = self._select_tool_names_for_multi(ranked_tools)
+                partial_responses = [
+                    self._run_tool(tool_name, question)
+                    for tool_name in selected_tool_names
+                ]
+                response = self._combine_tool_responses(partial_responses, question)
+                engine_used = "manual_multi"
+            else:
+                tool_name = self._select_tool_name(ranked_tools)
+                response = self._run_tool(tool_name, question)
+                engine_used = f"local_router:{tool_name}"
 
-            rendered_query = step.query.format_map(_SafeFormatDict(extracted_values))
-            ranked = _rank_docs_for_query(
-                rendered_query,
-                candidate_labels,
-                self.docs,
-                step.target_headers,
-                self.vector_retriever,
-                self.top_k_labels,
-                self.label_score_threshold,
-                self.vector_fallback_k,
-            )
-            step_outputs[step.step_id] = [doc for doc, _, _ in ranked]
-            if ranked:
-                ranked_groups.append(ranked)
-                docs_with_scores.extend(ranked)
-            logger.info(
-                "retrieval.retrieve_step | %s",
-                {
-                    "step_id": step.step_id,
-                    "target_headers": step.target_headers,
-                    "query": rendered_query,
-                    "result_count": len(ranked),
-                },
-            )
+        answer = _response_text(response)
+        source_nodes = getattr(response, "source_nodes", []) or []
+        context_docs = [_node_with_score_to_doc(node) for node in source_nodes]
 
-        if not docs_with_scores and self.vector_retriever is not None:
-            vec_docs = self.vector_retriever.get_relevant_documents(query)
-            logger.info(
-                "retrieval.query_level_vector_fallback | %s",
-                {
-                    "query": query,
-                    "fallback_count": min(len(vec_docs), self.k_docs),
-                },
-            )
-            return vec_docs[: self.k_docs]
-
-        seen_keys = set()
-        ranked_docs: List[Document] = []
-
-        # First pass: take the top surviving document from each subquery group so
-        # multi-part questions can cover multiple headers before score-only fill.
-        for group in ranked_groups:
-            for d, sc, matched in group:
-                if d.metadata.get("Header 2") == 'More Project':
-                    continue
-                key = _doc_key(d)
-                if key in seen_keys:
-                    continue
-                seen_keys.add(key)
-                ranked_docs.append(d)
-                break
-            if len(ranked_docs) >= self.k_docs:
-                return ranked_docs[: self.k_docs]
-
-        # Second pass: fill remaining slots by overall score, still deduped.
-        for d, sc, matched in sorted(docs_with_scores, key=lambda x: x[1], reverse=True):
-            if d.metadata.get("Header 2") == 'More Project':
-                continue
-            key = _doc_key(d)
-            if key in seen_keys:
-                continue
-            seen_keys.add(key)
-            ranked_docs.append(d)
-            if len(ranked_docs) >= self.k_docs:
-                break
         logger.info(
-            "retrieval.final_docs | %s",
+            "retrieval.llamaindex_engine | %s",
             {
-                "query": query,
-                "returned_count": len(ranked_docs),
-                "plan_strategy": plan.strategy,
-                "sources": [
-                    (doc.metadata or {}).get("source", "unknown")
-                    for doc in ranked_docs
-                ],
-                "headers": [
-                    (doc.metadata or {}).get("section_header")
-                    or (doc.metadata or {}).get("section_label")
-                    or "unknown"
-                    for doc in ranked_docs
-                ],
+                "query": question,
+                "engine": engine_used,
+                "ranked_tools": ranked_tools,
+                "high_confidence_tools": self._high_confidence_tools(ranked_tools),
+                "source_count": len(context_docs),
             },
         )
-        return ranked_docs
+        return {"answer": answer, "context": context_docs}
 
 
-class _SafeFormatDict(dict):
-    def __missing__(self, key: str) -> str:
-        return ""
+def _docs_for_tool(docs: Sequence[ContextDocument], tool_name: str) -> List[ContextDocument]:
+    selected: List[ContextDocument] = []
 
-    async def aget_relevant_documents(self, query: str) -> List[Document]:
-        # simple async wrapper
-        return self.get_relevant_documents(query)
+    for doc in docs:
+        metadata = doc.metadata or {}
+        section_type = _normalize(metadata.get("section_type", ""))
+        page_type = _normalize(metadata.get("page_type", ""))
+        header = _normalize(metadata.get("section_header", ""))
 
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains import create_retrieval_chain
-from .models_groq import get_answer_llm
+        if tool_name == "experience":
+            if section_type == "experience" or header == "work experience":
+                selected.append(doc)
+        elif tool_name == "projects":
+            if page_type in {"project_detail", "projects_index"} or section_type == "projects":
+                selected.append(doc)
+        elif tool_name == "education":
+            if section_type == "education":
+                selected.append(doc)
+        elif tool_name == "research":
+            if section_type == "research" or "research" in header:
+                selected.append(doc)
+        elif tool_name == "project_detail":
+            if page_type == "project_detail":
+                selected.append(doc)
+        elif tool_name == "about":
+            if header == "about" or section_type == "about":
+                selected.append(doc)
 
-SYSTEM_PROMPT = """You are Ritam's personal QA bot.
-                Use the following context from his website and resume to answer.
+    deduped: List[ContextDocument] = []
+    seen = set()
+    for doc in selected:
+        key = _doc_key(doc)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(doc)
+    return deduped
 
-                Question: {input}
-                Context:
-                {context}
 
-                Answer in first person as Ritam."""
+def _build_query_engine_tools(
+    docs: Sequence[ContextDocument],
+    vector_retriever: Any,
+) -> Tuple[List[QueryEngineTool], List[ToolRoutingProfile], List[str]]:
+    answer_llm = get_answer_llm()
 
-def build_rag_chain(vs, k=5, max_docs=6):
-    
-    all_docs = list(vs.docstore._dict.values())
-    vector_retriever = vs.as_retriever(search_kwargs={"k": 8})
+    tool_specs = [
+        (
+            "experience",
+            "Experience",
+            "Use for questions about Ritam's work experience, career history, companies, roles, responsibilities, and general experience. This also covers broad experience questions that may include research experience.",
+            "Questions about work experience, career history, employers, internships, full-time roles, responsibilities, time at companies, Juniper Networks, Paytm Money, Mist, CoRAL Lab, and what Ritam did at each company.",
+            4,
+        ),
+        (
+            "projects",
+            "Projects",
+            "Use for broad questions about Ritam's projects, portfolio, multiple projects, or which projects are relevant to a role.",
+            "Questions about broad project portfolio, kinds of projects, multiple projects, best projects, relevant projects, what Ritam has built, and portfolio work across several projects.",
+            4,
+        ),
+        (
+            "education",
+            "Education",
+            "Use for questions about Ritam's education, degrees, universities, academic background, or coursework-related background.",
+            "Questions about education, degrees, universities, Arizona State University, academic background, studies, and coursework.",
+            3,
+        ),
+        (
+            "research",
+            "Research",
+            "Use for questions specifically about research experience, publications, labs, papers, or research-oriented work.",
+            "Questions about research experience, papers, publications, ACL work, lab work, benchmarks, experiments, and academic research.",
+            3,
+        ),
+        (
+            "project_detail",
+            "Project Detail",
+            "Use for deep dives into a specific named project, shorthand references to a project, or follow-up questions about one particular project page.",
+            "Questions about one specific named project, a deep dive into a single project, project details, technical decisions, stack, implementation, and follow-ups about one project.",
+            3,
+        ),
+        (
+            "about",
+            "About",
+            "Use for questions about Ritam's personal introduction or short background summary from the About section only.",
+            "Questions about who Ritam is, introducing himself, personal introduction, short background summary, profile summary, and self introduction.",
+            3,
+        ),
+    ]
 
-    # old: ensemble/PrefixRetriever
-    # new: label routing retriever
-    retriever = LabelRoutingRetriever(
-        docs=all_docs,
-        vector_retriever=vector_retriever,
-        top_k_labels=k,
-        label_score_threshold=0.4,
-        k_docs=max_docs,
-        vector_fallback_k=2,
-    )
+    tools: List[QueryEngineTool] = []
+    tool_profiles: List[ToolRoutingProfile] = []
+    project_titles: List[str] = []
 
-    prompt = ChatPromptTemplate.from_template(
-            SYSTEM_PROMPT
+    for tool_name, display_name, description, routing_text, top_k in tool_specs:
+        tool_docs = _docs_for_tool(docs, tool_name)
+        if not tool_docs:
+            continue
+
+        bm25_corpus = []
+        bm25_docs: List[ContextDocument] = []
+        for doc in tool_docs:
+            search_text = " ".join(
+                [
+                    _metadata_search_text(doc),
+                    doc.page_content,
+                ]
             )
-    
-    llm = get_answer_llm()
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", SYSTEM_PROMPT),
-        ("human", "{input}"),
-    ])
+            tokens = _query_tokens(search_text)
+            if not tokens:
+                continue
+            bm25_corpus.append(tokens)
+            bm25_docs.append(doc)
 
-    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
-    rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
-    return rag_chain, retriever, SYSTEM_PROMPT
+        bm25 = BM25Okapi(bm25_corpus) if bm25_corpus else None
+
+        query_engine = FocusedSectionQueryEngine(
+            name=tool_name,
+            description=description,
+            docs=tool_docs,
+            llm=answer_llm,
+            vector_retriever=vector_retriever,
+            top_k=top_k,
+            bm25=bm25,
+            bm25_docs=bm25_docs,
+        )
+        tool = QueryEngineTool.from_defaults(
+            query_engine=query_engine,
+            name=tool_name,
+            description=description,
+            return_direct=False,
+        )
+        tools.append(tool)
+
+        logger.info(
+            "retrieval.tool_built | %s",
+            {
+                "tool": tool_name,
+                "display_name": display_name,
+                "doc_count": len(tool_docs),
+            },
+        )
+
+        if tool_name == "project_detail":
+            for doc in tool_docs:
+                metadata = doc.metadata or {}
+                for title in [metadata.get("page_title", ""), metadata.get("project_name", "")]:
+                    normalized_title = _normalize(str(title))
+                    if normalized_title and normalized_title not in project_titles:
+                        project_titles.append(normalized_title)
+
+        profile_text = " ".join(
+            part for part in [display_name, description, routing_text] if part
+        )
+        tool_profiles.append(
+            ToolRoutingProfile(
+                name=tool_name,
+                description=description,
+                profile_text=profile_text,
+                tokens=_query_tokens(profile_text),
+            )
+        )
+
+    return tools, tool_profiles, project_titles
+
+
+def build_rag_chain(index, docs, k: int = 5, max_docs: int = 4):
+    vector_retriever = index.as_retriever(similarity_top_k=max(k, 8))
+    tools, tool_profiles, project_titles = _build_query_engine_tools(docs, vector_retriever)
+
+    rag_chain = LlamaIndexToolRAGChainCompat(
+        tools=tools,
+        tool_profiles=tool_profiles,
+        system_prompt=SYSTEM_PROMPT,
+        project_titles=project_titles,
+    )
+    return rag_chain, tools, SYSTEM_PROMPT

@@ -1,84 +1,43 @@
-# rag_core/index_builder.py
-
+import io
+import json
 import re
+from pathlib import Path
 from typing import Dict, List
 
+import faiss
 import requests
-from langchain_community.document_loaders import OnlinePDFLoader
-from langchain_text_splitters import HTMLSectionSplitter, RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
+from bs4 import BeautifulSoup
+from llama_index.core import Document, Settings, StorageContext, VectorStoreIndex, load_index_from_storage
+from llama_index.vector_stores.faiss import FaissVectorStore
+from pypdf import PdfReader
 
-from .embeddings_model import get_embeddings
-from .config import VECTORSTORE_PATH
-from .sources import CRAWL_ROOTS, FIXED_URLS
+from .config import FAISS_INDEX_PATH, INDEX_CACHE_PATH, INDEX_ID, NODE_CACHE_PATH, VECTORSTORE_PATH
 from .crawler import crawl_subpages
+from .embeddings_model import get_embeddings
+from .sources import CRAWL_ROOTS, FIXED_URLS
 
 
 def _is_gdrive_file(url: str) -> bool:
-    """Return True if this looks like a Google Drive file view URL."""
     return "drive.google.com" in url and "/file/d/" in url
 
 
 def _gdrive_view_to_download(url: str) -> str:
-    """
-    Convert a Google Drive view URL to a direct download URL.
-
-    Example:
-      https://drive.google.com/file/d/<ID>/view
-      -> https://drive.google.com/uc?export=download&id=<ID>
-    """
-    m = re.search(r"/file/d/([^/]+)/", url)
-    if not m:
+    match = re.search(r"/file/d/([^/]+)/", url)
+    if not match:
         return url
-    file_id = m.group(1)
+    file_id = match.group(1)
     return f"https://drive.google.com/uc?export=download&id={file_id}"
-
-
-def _infer_section_label_from_url(url: str) -> str:
-    """
-    Heuristic: guess a section label from the URL path.
-    e.g.
-      https://your-site.com/about                 -> 'about'
-      https://your-site.com/experience/juniper   -> 'experience/juniper'
-    """
-    try:
-        path = url.split("://", 1)[-1].split("/", 1)[-1]
-    except Exception:
-        return url
-    path = path.strip("/")
-    if not path:
-        return "root"
-    return path
-
-
-def _normalize_label(text: str, max_len: int = 80) -> str:
-    """
-    Create a short normalized label from a header text.
-    - lowercases, removes newlines, collapses whitespace
-    - trims to max_len and replaces spaces with '-' for compact labels
-    """
-    if not text:
-        return ""
-    lab = " ".join(text.split())  # collapse whitespace/newlines
-    lab = lab.strip().lower()
-    # shorten if too long
-    if len(lab) > max_len:
-        lab = lab[: max_len - 3].rstrip() + "..."
-    # use a compact label form (slug-like) but keep readability
-    slug = lab.replace(" ", "-")
-    # remove characters that would be awkward in metadata keys
-    slug = re.sub(r"[^a-z0-9_\-\.]+", "", slug)
-    return slug
 
 
 def _normalize_whitespace(text: str) -> str:
     return " ".join((text or "").split()).strip()
 
 
-def _extract_summary_sentences(text: str, max_sentences: int = 2, max_chars: int = 320) -> str:
-    """
-    Pull 1-2 meaningful sentences from a chunk without using an LLM.
-    """
+def _extract_summary_sentences(
+    text: str,
+    max_sentences: int = 2,
+    max_chars: int = 320,
+) -> str:
     normalized = _normalize_whitespace(text)
     if not normalized:
         return ""
@@ -87,18 +46,20 @@ def _extract_summary_sentences(text: str, max_sentences: int = 2, max_chars: int
     picked: List[str] = []
     for sentence in sentences:
         clean = sentence.strip()
-        if len(clean) < 35:
+        if len(clean) < 30:
             continue
-        if clean.lower() in {"project overview", "key highlights"}:
+        lowered = clean.lower()
+        if lowered in {"project overview", "key highlights", "more project"}:
             continue
         picked.append(clean)
         if len(picked) >= max_sentences:
             break
 
     if not picked:
-        picked = [normalized[:max_chars].rstrip()]
+        summary = normalized[:max_chars].rstrip()
+    else:
+        summary = " ".join(picked)
 
-    summary = " ".join(picked)
     if len(summary) > max_chars:
         summary = summary[: max_chars - 3].rstrip() + "..."
     return summary
@@ -106,6 +67,11 @@ def _extract_summary_sentences(text: str, max_sentences: int = 2, max_chars: int
 
 def _is_project_page(url: str) -> bool:
     return "/project/" in (url or "").rstrip("/")
+
+
+def _is_project_index_page(url: str) -> bool:
+    normalized = (url or "").rstrip("/")
+    return normalized.endswith("/project")
 
 
 def _is_noise_header(header: str) -> bool:
@@ -118,21 +84,53 @@ def _is_noise_header(header: str) -> bool:
     }
 
 
-def _derive_page_title(docs_for_page: List) -> str:
-    """
-    Prefer a project title / primary page title over repeated structural headers.
-    """
-    for doc in docs_for_page:
-        metadata = doc.metadata or {}
+def _is_site_chrome_header(header: str) -> bool:
+    normalized = _normalize_whitespace(header).lower()
+    return normalized in {
+        "",
+        "ritam's portfolio",
+        "back to homepage",
+        "search menu",
+        "available for work",
+    }
+
+
+def _clean_title_candidate(header: str) -> str:
+    cleaned = _normalize_whitespace(header)
+    cleaned = re.sub(r"\s*[-|:]+\s*$", "", cleaned).strip()
+    return cleaned
+
+
+def _is_special_project_h2(header: str) -> bool:
+    normalized = _normalize_whitespace(header).lower()
+    return normalized in {
+        "project overview",
+        "key highlights",
+        "more project",
+    }
+
+
+def _derive_page_title(records_for_page: List[dict]) -> str:
+    for record in records_for_page:
+        metadata = record["metadata"]
         header = _normalize_whitespace(metadata.get("section_header", ""))
         header2 = _normalize_whitespace(metadata.get("Header 2", ""))
-        if header2.lower() == "more project" and header:
-            return header
+        header1 = _clean_title_candidate(metadata.get("Header 1", ""))
+        if header2.lower() == "more project" and header1 and not _is_site_chrome_header(header1):
+            return header1
 
-    for doc in docs_for_page:
-        metadata = doc.metadata or {}
-        header = _normalize_whitespace(metadata.get("section_header", ""))
+    for record in records_for_page:
+        metadata = record["metadata"]
+        header1 = _clean_title_candidate(metadata.get("Header 1", ""))
+        if header1 and not _is_site_chrome_header(header1) and not _is_noise_header(header1):
+            return header1
+
+    for record in records_for_page:
+        metadata = record["metadata"]
+        header = _clean_title_candidate(metadata.get("section_header", ""))
         if _is_noise_header(header):
+            continue
+        if _is_site_chrome_header(header):
             continue
         if _is_project_page(metadata.get("source", "")) and header.lower() in {
             "project overview",
@@ -144,270 +142,400 @@ def _derive_page_title(docs_for_page: List) -> str:
     return ""
 
 
-def _build_page_summaries(docs: List) -> None:
-    """
-    Persist planner-friendly page title and summary metadata onto the docs.
-    """
-    docs_by_source: Dict[str, List] = {}
-    for doc in docs:
-        source = (doc.metadata or {}).get("source", "")
-        docs_by_source.setdefault(source, []).append(doc)
-
-    for source, docs_for_page in docs_by_source.items():
-        page_title = _derive_page_title(docs_for_page)
-        summary_parts: List[str] = []
-
-        for doc in docs_for_page:
-            metadata = doc.metadata or {}
-            header = _normalize_whitespace(metadata.get("section_header", ""))
-            header2 = _normalize_whitespace(metadata.get("Header 2", ""))
-            if header.lower() == "project overview" or header2.lower() == "project overview":
-                summary = _extract_summary_sentences(doc.page_content)
-                if summary:
-                    summary_parts.append(summary)
-            elif not summary_parts and header and header == page_title:
-                summary = _extract_summary_sentences(doc.page_content)
-                if summary:
-                    summary_parts.append(summary)
-
-        page_summary = " ".join(summary_parts[:2]).strip()
-        if len(page_summary) > 320:
-            page_summary = page_summary[:317].rstrip() + "..."
-
-        for doc in docs_for_page:
-            metadata = doc.metadata or {}
-            metadata["page_title"] = page_title or metadata.get("section_header", "")
-            if page_summary:
-                metadata["page_summary"] = page_summary
-            metadata["planner_include"] = bool(page_title) and not _is_noise_header(page_title)
-            doc.metadata = metadata
+def _classify_page_type(url: str) -> str:
+    normalized = (url or "").lower()
+    if "/project/" in normalized:
+        return "project_detail"
+    if normalized.rstrip("/").endswith("/project"):
+        return "projects_index"
+    if "old-home" in normalized:
+        return "about"
+    if "scholar.google.com" in normalized:
+        return "research_profile"
+    if normalized.rstrip("/").endswith("/stack"):
+        return "stack"
+    if normalized.rstrip("/").endswith("framer.app") or normalized.rstrip("/").endswith("framer.app/"):
+        return "landing"
+    return "reference"
 
 
-def load_web_docs(urls: List[str]):
-    """
-    Load documents from a list of URLs.
+def _classify_section_type(header: str, page_type: str) -> str:
+    normalized = _normalize_whitespace(header).lower()
+    if "research" in normalized:
+        return "research"
+    if "experience" in normalized:
+        return "experience"
+    if "education" in normalized:
+        return "education"
+    if "skill" in normalized or "stack" in normalized:
+        return "skills"
+    if "project" in normalized and page_type != "project_detail":
+        return "projects"
+    if page_type == "project_detail":
+        if "highlight" in normalized:
+            return "project_highlights"
+        if "overview" in normalized:
+            return "project_overview"
+        return "project_detail"
+    return "general"
 
-    - HTML URLs:
-        * Fetch raw HTML with `requests`
-        * Split into sections with HTMLSectionSplitter (h1/h2)
-        * Infer section labels from the actual section header lines (preferred)
-    - PDF URLs (including Google Drive file links):
-        * Load with OnlinePDFLoader (one doc per page)
-    """
-    html_urls: List[str] = []
-    pdf_urls: List[str] = []
 
-    for url in urls:
-        u = url.strip()
-        if not u:
+def _project_name_from_url(url: str) -> str:
+    if not _is_project_page(url):
+        return ""
+    slug = url.rstrip("/").split("/")[-1]
+    return slug.replace("-", " ").replace("_", " ").title()
+
+
+def _build_page_summaries(records: List[dict]) -> None:
+    records_by_source: Dict[str, List[dict]] = {}
+    for record in records:
+        source = (record["metadata"] or {}).get("source", "")
+        records_by_source.setdefault(source, []).append(record)
+
+    for source, records_for_page in records_by_source.items():
+        page_title = _derive_page_title(records_for_page)
+        page_type = _classify_page_type(source)
+        page_text = "\n\n".join(
+            _normalize_whitespace(record.get("text", "")) for record in records_for_page
+        )
+        page_description = _extract_summary_sentences(page_text, max_sentences=3, max_chars=420)
+
+        project_name = _project_name_from_url(source)
+        for record in records_for_page:
+            metadata = record["metadata"]
+            fallback_title = _clean_title_candidate(
+                page_title or project_name or metadata.get("section_header", "")
+            )
+            section_header = _clean_title_candidate(metadata.get("section_header", ""))
+            metadata["page_title"] = fallback_title
+            metadata["page_type"] = page_type
+            metadata["project_name"] = project_name
+            metadata["section_type"] = _classify_section_type(
+                metadata.get("section_header", ""),
+                page_type,
+            )
+            if section_header and section_header != fallback_title:
+                metadata["section_label"] = f"{fallback_title} :: {section_header}"
+            else:
+                metadata["section_label"] = section_header or fallback_title
+            metadata["page_description"] = page_description
+            metadata["section_description"] = _extract_summary_sentences(
+                record.get("text", ""),
+                max_sentences=2,
+                max_chars=320,
+            )
+            metadata["chunk_description"] = metadata["section_description"]
+            if page_type == "project_detail":
+                metadata["project_description"] = page_description
+
+
+def _section_record(
+    text: str,
+    url: str,
+    header_1: str = "",
+    header_2: str = "",
+) -> dict | None:
+    normalized_text = _normalize_whitespace(text)
+    if not normalized_text:
+        return None
+
+    section_header = header_2 or header_1 or "Page Content"
+    metadata = {
+        "source": url,
+        "section_header": _normalize_whitespace(section_header),
+        "section_label": _normalize_whitespace(section_header),
+        "section_type": "general",
+        "section_scope": _normalize_whitespace(section_header).lower().replace(" ", "_"),
+        "Header 1": _normalize_whitespace(header_1),
+        "Header 2": _normalize_whitespace(header_2),
+    }
+    return {"text": normalized_text, "metadata": metadata}
+
+
+def _merge_record_text(existing_text: str, incoming_text: str) -> str:
+    existing = _normalize_whitespace(existing_text)
+    incoming = _normalize_whitespace(incoming_text)
+    if not existing:
+        return incoming
+    if not incoming:
+        return existing
+    if incoming in existing:
+        return existing
+    return f"{existing}\n\n{incoming}"
+
+
+def _normalize_records(records: List[dict]) -> List[dict]:
+    normalized_records: List[dict] = []
+    records_by_source: Dict[str, List[dict]] = {}
+    for record in records:
+        source = (record.get("metadata") or {}).get("source", "")
+        records_by_source.setdefault(source, []).append(record)
+
+    for source, source_records in records_by_source.items():
+        page_type = _classify_page_type(source)
+        merged_for_source: List[dict] = []
+        index_by_key: Dict[tuple, int] = {}
+
+        for record in source_records:
+            metadata = dict(record.get("metadata") or {})
+            text = _normalize_whitespace(record.get("text", ""))
+            header1 = _clean_title_candidate(metadata.get("Header 1", ""))
+            header2 = _clean_title_candidate(metadata.get("Header 2", ""))
+            section_header = _clean_title_candidate(metadata.get("section_header", ""))
+
+            if _is_site_chrome_header(section_header):
+                continue
+            if section_header.lower() == "more project":
+                continue
+
+            effective_header = section_header or header1 or "Page Content"
+            effective_h2 = header2
+
+            if page_type == "project_detail":
+                if _is_special_project_h2(header2) or _is_special_project_h2(section_header):
+                    effective_header = header1 or section_header or effective_header
+                    effective_h2 = ""
+                elif header1 and section_header == header1:
+                    effective_header = header1
+                    effective_h2 = ""
+
+            metadata["section_header"] = effective_header
+            metadata["section_label"] = effective_header
+            metadata["Header 1"] = header1
+            metadata["Header 2"] = effective_h2
+
+            key = (effective_header, effective_h2)
+            existing_index = index_by_key.get(key)
+            if existing_index is None:
+                merged_record = {
+                    "text": text,
+                    "metadata": metadata,
+                }
+                index_by_key[key] = len(merged_for_source)
+                merged_for_source.append(merged_record)
+            else:
+                merged_for_source[existing_index]["text"] = _merge_record_text(
+                    merged_for_source[existing_index]["text"],
+                    text,
+                )
+
+        normalized_records.extend(merged_for_source)
+
+    return normalized_records
+
+
+def _parse_html_sections(html: str, url: str) -> List[dict]:
+    soup = BeautifulSoup(html, "lxml")
+    for tag in soup(["script", "style", "noscript"]):
+        tag.decompose()
+
+    body = soup.body or soup
+    elements = body.find_all(["h1", "h2", "p", "li"], recursive=True)
+
+    sections: List[dict] = []
+    current_h1 = ""
+    current_h2 = ""
+    current_lines: List[str] = []
+
+    def flush_section() -> None:
+        nonlocal current_lines
+        record = _section_record(
+            "\n".join(current_lines),
+            url=url,
+            header_1=current_h1,
+            header_2=current_h2,
+        )
+        if record:
+            record["metadata"]["section_type"] = "remote_html"
+            sections.append(record)
+        current_lines = []
+
+    for element in elements:
+        text = _normalize_whitespace(element.get_text(" ", strip=True))
+        if not text:
             continue
 
-        # Google Drive file links (view) -> direct download PDF
-        if _is_gdrive_file(u):
-            pdf_urls.append(_gdrive_view_to_download(u))
-        # Direct PDF URLs
-        elif u.lower().endswith(".pdf"):
-            pdf_urls.append(u)
-        # Everything else is treated as HTML
-        else:
-            html_urls.append(u)
+        if element.name == "h1":
+            if current_lines:
+                flush_section()
+            current_h1 = text
+            current_h2 = ""
+            current_lines = [text]
+            continue
 
-    docs = []
+        if element.name == "h2":
+            if _is_special_project_h2(text):
+                if not current_h1:
+                    current_h1 = text
+                    current_lines = [current_h1]
+                continue
+            if current_lines:
+                flush_section()
+            if not current_h1:
+                current_h1 = text
+            current_h2 = text
+            current_lines = [text]
+            continue
 
-    # --- HTML via HTMLSectionSplitter on raw HTML string ---
-    if html_urls:
-        print(f"[index_builder] Loading HTML for {len(html_urls)} URLs with HTMLSectionSplitter")
+        if not current_h1 and element.name in {"p", "li"}:
+            title = _normalize_whitespace(soup.title.get_text(" ", strip=True)) if soup.title else ""
+            current_h1 = title or _project_name_from_url(url) or "Page Content"
+            current_h2 = ""
+            current_lines = [current_h1]
 
-        headers_to_split_on = [
-            ("h1", "Header 1"),
-            ("h2", "Header 2"),
-        ]
-        html_splitter = HTMLSectionSplitter(headers_to_split_on=headers_to_split_on)
+        if current_lines:
+            current_lines.append(text)
 
-        for url in html_urls:
-            try:
-                print(f"[index_builder]   Fetching HTML from {url}")
-                resp = requests.get(url, timeout=15)
-                resp.raise_for_status()
-                html_string = resp.text
+    if current_lines:
+        flush_section()
 
-                # HTMLSectionSplitter returns a list[Document] where each Document starts with the header line
-                html_header_splits = html_splitter.split_text(html_string)
-
-                # we will prefer to use the header line as the canonical label for each section
-                # but ensure we deduplicate very similar headers within the same page
-                seen_labels_in_page = set()
-
-                print(f"[index_builder]   {url}: {len(html_header_splits)} HTML sections")
-
-                for d in html_header_splits:
-                    # source URL
-                    d.metadata["source"] = url
-                    # extract the first meaningful non-empty line as the header
-                    first_lines = [ln.strip() for ln in d.page_content.splitlines() if ln.strip()]
-                    header_line = first_lines[0] if first_lines else ""
-
-                    # normalize header_line for metadata and label
-                    # keep section_header as human readable short header (truncated if necessary)
-                    human_header = header_line
-                    if len(human_header) > 300:
-                        human_header = human_header[:300] + "..."
-
-                    if human_header != "More Project":
-                        d.metadata["section_header"] = human_header
-                    else:
-                        # Extract endpoint from URL as fallback header
-                        try:
-                            # e.g. https://site.com/projects/my-cool-project -> "my-cool-project"
-                            endpoint = url.rstrip("/").split("/")[-1]
-                            # Make it human-readable
-                            endpoint = endpoint.replace("-", " ").replace("_", " ").title()
-                            d.metadata["section_header"] = endpoint
-                            d.metadata["section_label"] = endpoint
-                        except Exception:
-                            # absolute fallback
-                            d.metadata["section_header"] = human_header
-                            d.metadata["section_label"] = human_header
-
-                    # produce a short machine-friendly label from header; fallback to URL-based label
-                    # label_from_header = _normalize_label(header_line)
-                    # if not label_from_header:
-                    #     label_from_header = _infer_section_label_from_url(url)
-
-                    # # dedupe labels within this page (if splitter produced repeated headers)
-                    # dedup_label = label_from_header
-                    # suffix = 1
-                    # while dedup_label in seen_labels_in_page:
-                    #     dedup_label = f"{label_from_header}-{suffix}"
-                    #     suffix += 1
-                    # seen_labels_in_page.add(dedup_label)
-
-                    # d.metadata["section_label"] = dedup_label
-                    d.metadata["section_type"] = "remote_html"
-                # append docs
-                docs.extend(html_header_splits)
-            except Exception as e:
-                print(f"[index_builder] Error processing HTML from {url}: {e}")
-
-    # --- PDF files (including Drive) via OnlinePDFLoader ---
-    for pdf_url in pdf_urls:
-        print(f"[index_builder] Loading PDF from {pdf_url}")
-        try:
-            pdf_loader = OnlinePDFLoader(pdf_url)
-            pdf_docs = pdf_loader.load()
-            section_label = _infer_section_label_from_url(pdf_url)
-            for d in pdf_docs:
-                d.metadata["source"] = pdf_url
-                d.metadata["section_label"] = section_label
-                d.metadata["section_type"] = "remote_pdf"
-            docs.extend(pdf_docs)
-            print(f"[index_builder]   {pdf_url}: {len(pdf_docs)} PDF pages")
-        except Exception as e:
-            print(f"[index_builder] Failed to load PDF from {pdf_url}: {e}")
-
-    _build_page_summaries(docs)
-    return docs
+    return sections
 
 
-def split_docs(docs, chunk_size: int = 1000, chunk_overlap: int = 200):
-    """
-    Split loaded documents into chunks for embedding.
+def _load_pdf_records(pdf_url: str) -> List[dict]:
+    response = requests.get(pdf_url, timeout=20)
+    response.raise_for_status()
+    reader = PdfReader(io.BytesIO(response.content))
 
-    - HTML docs (from HTMLSectionSplitter) are already section-level chunks → keep as-is.
-    - Non-HTML docs (PDF pages, etc.) are split with RecursiveCharacterTextSplitter.
-    """
-    html_docs = [d for d in docs if d.metadata.get("section_type") == "remote_html"]
-    other_docs = [d for d in docs if d.metadata.get("section_type") != "remote_html"]
-
-    chunks: List = []
-
-    # Keep HTML sections as they are
-    chunks.extend(html_docs)
-
-    # Split other docs (PDFs, etc.) into text chunks
-    if other_docs:
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
-            add_start_index=True,
+    records: List[dict] = []
+    for page_number, page in enumerate(reader.pages, start=1):
+        text = _normalize_whitespace(page.extract_text() or "")
+        if not text:
+            continue
+        records.append(
+            {
+                "text": text,
+                "metadata": {
+                    "source": pdf_url,
+                    "section_header": f"PDF Page {page_number}",
+                    "section_label": f"pdf_page_{page_number}",
+                    "section_type": "remote_pdf",
+                    "section_scope": "remote_pdf",
+                    "Header 1": "",
+                    "Header 2": "",
+                },
+            }
         )
-        other_chunks = splitter.split_documents(other_docs)
-        for c in other_chunks:
-            c.metadata.setdefault("section_label", c.metadata.get("source", "unknown"))
-            c.metadata.setdefault(
-                "section_type",
-                c.metadata.get("section_type", "remote_pdf"),
-            )
-        chunks.extend(other_chunks)
+    return records
 
-    print(
-        f"[index_builder] split_docs: {len(html_docs)} HTML section chunks, "
-        f"{len(chunks) - len(html_docs)} non-HTML chunks"
-    )
-    return chunks
+
+def load_web_docs(urls: List[str]) -> List[dict]:
+    records: List[dict] = []
+
+    for url in urls:
+        clean_url = url.strip()
+        if not clean_url:
+            continue
+
+        target_url = _gdrive_view_to_download(clean_url) if _is_gdrive_file(clean_url) else clean_url
+        try:
+            if target_url.lower().endswith(".pdf") or _is_gdrive_file(clean_url):
+                print(f"[index_builder] Loading PDF from {target_url}")
+                records.extend(_load_pdf_records(target_url))
+                continue
+
+            print(f"[index_builder] Fetching HTML from {target_url}")
+            response = requests.get(target_url, timeout=15)
+            response.raise_for_status()
+            page_records = _parse_html_sections(response.text, target_url)
+            print(f"[index_builder]   {target_url}: {len(page_records)} sections")
+            records.extend(page_records)
+        except Exception as exc:
+            print(f"[index_builder] Error processing {target_url}: {exc}")
+
+    records = _normalize_records(records)
+    _build_page_summaries(records)
+    return records
+
+
+def split_docs(records: List[dict]) -> List[dict]:
+    """HTML is already section-based; keep each extracted section as one node."""
+    print(f"[index_builder] split_docs: {len(records)} section nodes")
+    return records
+
+
+def _persist_node_cache(records: List[dict]) -> None:
+    INDEX_CACHE_PATH.mkdir(parents=True, exist_ok=True)
+    with NODE_CACHE_PATH.open("w", encoding="utf-8") as handle:
+        json.dump(records, handle, ensure_ascii=False, indent=2)
+
+
+def load_node_cache() -> List[dict]:
+    if not NODE_CACHE_PATH.exists():
+        return []
+    with NODE_CACHE_PATH.open("r", encoding="utf-8") as handle:
+        records = json.load(handle)
+    records = _normalize_records(records)
+    _build_page_summaries(records)
+    return records
 
 
 def build_and_save_index():
-    """
-    Crawl URLs, load docs, split into chunks, build FAISS index, and save it.
-
-    Returns:
-        (int, list): number of chunks indexed, and the chunks themselves.
-    """
-    # 1. Crawl project roots (and any other CRAWL_ROOTS) to get sub-URLs
+    """Crawl URLs, extract section nodes, build a LlamaIndex FAISS store, and persist it."""
     crawl_urls: List[str] = []
     for root in CRAWL_ROOTS:
         try:
             urls = crawl_subpages(root)
             print(f"[index_builder] Crawled {len(urls)} URLs under {root}")
             crawl_urls.extend(urls)
-        except Exception as e:
-            print(f"[index_builder] Failed to crawl {root}: {e}")
+        except Exception as exc:
+            print(f"[index_builder] Failed to crawl {root}: {exc}")
 
-    # 2. Combine fixed URLs (resume, about, scholar, GitHub, etc.) + crawled URLs
     all_urls = list(set(FIXED_URLS + crawl_urls))
-
     print(f"[index_builder] Total URLs to load: {len(all_urls)}")
-    for u in all_urls:
-        print(f"  - {u}")
+    for url in all_urls:
+        print(f"  - {url}")
 
-    docs = load_web_docs(all_urls)
-    print(f"[index_builder] Loaded {len(docs)} raw documents")
-
-    if not docs:
+    records = load_web_docs(all_urls)
+    print(f"[index_builder] Loaded {len(records)} raw section records")
+    if not records:
         print("[index_builder] WARNING: No documents loaded; aborting index build.")
         return 0, []
 
-    # 3. Split into chunks (HTML via HTMLSectionSplitter, PDFs via recursive splitter)
-    chunks = split_docs(docs)
-    print(f"[index_builder] Split into {len(chunks)} chunks")
+    nodes = split_docs(records)
+    docs = [Document(text=node["text"], metadata=node["metadata"]) for node in nodes]
 
-    if not chunks:
-        print("[index_builder] WARNING: No chunks produced; aborting FAISS build.")
-        return 0, []
-
-    # 4. Build vector store with HF embeddings (e.g., all-MiniLM)
     embeddings = get_embeddings()
-    vs = FAISS.from_documents(chunks, embeddings)
+    Settings.embed_model = embeddings
+    sample_embedding = embeddings.get_text_embedding("dimension probe")
+    faiss_index = faiss.IndexFlatL2(len(sample_embedding))
+    vector_store = FaissVectorStore(faiss_index=faiss_index)
+    storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-    # 5. Save to disk
-    vs.save_local(VECTORSTORE_PATH)
-    print(
-        f"[index_builder] Saved FAISS index to {VECTORSTORE_PATH} "
-        f"(chunks={len(chunks)})"
+    index = VectorStoreIndex.from_documents(
+        docs,
+        storage_context=storage_context,
+        embed_model=embeddings,
+        show_progress=False,
     )
+    index.set_index_id(INDEX_ID)
 
-    return len(chunks), chunks
+    Path(VECTORSTORE_PATH).mkdir(parents=True, exist_ok=True)
+    index.storage_context.persist(persist_dir=VECTORSTORE_PATH)
+    _persist_node_cache(nodes)
+
+    print(
+        f"[index_builder] Saved LlamaIndex FAISS index to {VECTORSTORE_PATH} "
+        f"(sections={len(nodes)})"
+    )
+    return len(nodes), nodes
 
 
 def load_vectorstore():
-    """
-    Load the FAISS vector store from disk using the same embedding model.
-    """
+    """Load the persisted LlamaIndex vector index from disk."""
+    if not Path(VECTORSTORE_PATH).exists():
+        raise FileNotFoundError(f"Persisted index not found at {VECTORSTORE_PATH}")
+
     embeddings = get_embeddings()
-    vs = FAISS.load_local(
-        VECTORSTORE_PATH,
-        embeddings,
-        allow_dangerous_deserialization=True,
+    Settings.embed_model = embeddings
+    vector_store = FaissVectorStore.from_persist_dir(VECTORSTORE_PATH)
+    storage_context = StorageContext.from_defaults(
+        persist_dir=VECTORSTORE_PATH,
+        vector_store=vector_store,
     )
-    return vs
+    return load_index_from_storage(
+        storage_context,
+        index_id=INDEX_ID,
+        embed_model=embeddings,
+    )

@@ -3,14 +3,13 @@ import os
 import threading
 import time
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, List, Sequence, Tuple
+from typing import Any, Dict, List, Sequence
 
-from rag_core.config import VECTORSTORE_PATH
+from rag_core.config import NODE_CACHE_PATH, VECTORSTORE_PATH
 from rag_core.evaluator import evaluate_answer
-from rag_core.index_builder import build_and_save_index, load_vectorstore
+from rag_core.index_builder import build_and_save_index, load_node_cache, load_vectorstore
 from rag_core.logging_utils import get_model_flow_logger, log_event
-from rag_core.rag_chain import build_rag_chain
+from rag_core.rag_chain import ContextDocument, build_rag_chain
 from rag_core.rag_chain_helper import rewrite_question_with_history
 
 
@@ -77,14 +76,24 @@ class CareerQARuntime:
         self.retriever = None
         self.system_prompt = None
         self.refresh_thread = None
+        self.pending_clarification: Dict[str, Any] | None = None
 
         self.init_rag()
         self.start_refresh_thread()
         atexit.register(self.stop)
 
+    def _load_context_docs(self) -> List[ContextDocument]:
+        return [
+            ContextDocument(
+                page_content=record["text"],
+                metadata=record["metadata"],
+            )
+            for record in load_node_cache()
+        ]
+
     def init_rag(self) -> None:
         """Build the index if needed, then load the vectorstore and chain."""
-        index_path = Path(VECTORSTORE_PATH) / "index.faiss"
+        index_path = NODE_CACHE_PATH
 
         should_rebuild = self.refresh_config.rebuild_on_startup or not index_path.exists()
         if should_rebuild:
@@ -104,15 +113,17 @@ class CareerQARuntime:
                     fallback="loading_existing_index",
                 )
 
-        vectorstore = load_vectorstore()
+        vector_index = load_vectorstore()
+        docs = self._load_context_docs()
         rag_chain, retriever, system_prompt = build_rag_chain(
-            vectorstore,
+            vector_index,
+            docs,
             k=5,
-            max_docs=2,
+            max_docs=3,
         )
 
         with self.state_lock:
-            self.vectorstore = vectorstore
+            self.vectorstore = vector_index
             self.rag_chain = rag_chain
             self.retriever = retriever
             self.system_prompt = system_prompt
@@ -133,15 +144,17 @@ class CareerQARuntime:
             chunk_count, _ = build_and_save_index()
             self.log_event("refresh.index_built", mode="crawl", chunks=chunk_count)
 
-            vectorstore = load_vectorstore()
+            vector_index = load_vectorstore()
+            docs = self._load_context_docs()
             rag_chain, retriever, system_prompt = build_rag_chain(
-                vectorstore,
+                vector_index,
+                docs,
                 k=5,
-                max_docs=2,
+                max_docs=3,
             )
 
             with self.state_lock:
-                self.vectorstore = vectorstore
+                self.vectorstore = vector_index
                 self.rag_chain = rag_chain
                 self.retriever = retriever
                 self.system_prompt = system_prompt
@@ -214,45 +227,104 @@ class CareerQARuntime:
     def stop(self) -> None:
         self.stop_refresh_event.set()
 
-    def _run_rag(self, question: str, history_text: str) -> Tuple[str, List[Any]]:
+    def _run_rag(
+        self,
+        question: str,
+        history_text: str,
+        forced_tool: str | None = None,
+    ) -> Dict[str, Any]:
         with self.state_lock:
             local_rag_chain = self.rag_chain
 
-        rag_result = local_rag_chain.invoke(
-            {
-                "input": question,
-                "chat_history": history_text,
-            }
-        )
-        return rag_result.get("answer", "") or "", rag_result.get("context", []) or []
+        payload: Dict[str, Any] = {
+            "input": question,
+            "chat_history": history_text,
+        }
+        if forced_tool:
+            payload["forced_tool"] = forced_tool
+        return local_rag_chain.invoke(payload)
 
     def generate_answer(self, message: str, history: Sequence[Sequence[str]]) -> str:
         """Run rewrite, RAG, evaluation, and optional retry for one user message."""
         self.log_event("request.start", user_message=message)
-
-        try:
-            standalone_question = rewrite_question_with_history(history, message)
-        except Exception as exc:
-            self.log_event("rewrite.error", error=str(exc))
-            standalone_question = message
-
         history_text = _history_to_text(history)
-        self.log_event(
-            "rewrite.done",
-            standalone_question=standalone_question,
-            history_chars=len(history_text),
-        )
 
-        try:
-            answer_1, context_docs_1 = self._run_rag(standalone_question, history_text)
-        except Exception as exc:
-            self.log_event("rag.error", error=str(exc))
-            fallback = (
-                "I'm having trouble accessing my knowledge base right now. "
-                "Please try again in a moment."
+        with self.state_lock:
+            pending = self.pending_clarification
+
+        if pending:
+            with self.state_lock:
+                local_rag_chain = self.rag_chain
+            forced_tool = local_rag_chain.resolve_clarification_reply(
+                message,
+                pending.get("candidate_tools", []),
+                pending.get("preferred_tool", "about"),
             )
-            self.log_event("request.end", final_answer_preview=fallback[:400])
-            return fallback
+            standalone_question = pending.get("original_question", message)
+            self.log_event(
+                "routing.clarification_resolved",
+                original_question=standalone_question,
+                clarification_reply=message,
+                forced_tool=forced_tool,
+                candidate_tools=pending.get("candidate_tools", []),
+            )
+            with self.state_lock:
+                self.pending_clarification = None
+            try:
+                rag_result = self._run_rag(standalone_question, history_text, forced_tool=forced_tool)
+            except Exception as exc:
+                self.log_event("rag.error", error=str(exc))
+                fallback = (
+                    "I'm having trouble accessing my knowledge base right now. "
+                    "Please try again in a moment."
+                )
+                self.log_event("request.end", final_answer_preview=fallback[:400])
+                return fallback
+        else:
+            try:
+                standalone_question = rewrite_question_with_history(history, message)
+            except Exception as exc:
+                self.log_event("rewrite.error", error=str(exc))
+                standalone_question = message
+
+            self.log_event(
+                "rewrite.done",
+                standalone_question=standalone_question,
+                history_chars=len(history_text),
+            )
+
+            try:
+                rag_result = self._run_rag(standalone_question, history_text)
+            except Exception as exc:
+                self.log_event("rag.error", error=str(exc))
+                fallback = (
+                    "I'm having trouble accessing my knowledge base right now. "
+                    "Please try again in a moment."
+                )
+                self.log_event("request.end", final_answer_preview=fallback[:400])
+                return fallback
+
+        if rag_result.get("needs_clarification"):
+            clarification_answer = rag_result.get("answer", "") or (
+                "Could you clarify which area you want me to focus on?"
+            )
+            with self.state_lock:
+                self.pending_clarification = {
+                    "candidate_tools": rag_result.get("candidate_tools", []),
+                    "preferred_tool": rag_result.get("preferred_tool", "about"),
+                    "original_question": rag_result.get("original_question", standalone_question),
+                }
+            self.log_event(
+                "routing.clarification_requested",
+                original_question=standalone_question,
+                candidate_tools=rag_result.get("candidate_tools", []),
+                preferred_tool=rag_result.get("preferred_tool", "about"),
+            )
+            self.log_event("request.end", final_answer_preview=clarification_answer[:400])
+            return clarification_answer
+
+        answer_1 = rag_result.get("answer", "") or ""
+        context_docs_1 = rag_result.get("context", []) or []
 
         self.log_event(
             "rag.done",
@@ -309,7 +381,9 @@ class CareerQARuntime:
                 )
 
                 try:
-                    answer_2, context_docs_2 = self._run_rag(revision_prompt, history_text)
+                    retry_result = self._run_rag(revision_prompt, history_text)
+                    answer_2 = retry_result.get("answer", "") or ""
+                    context_docs_2 = retry_result.get("context", []) or []
                     self.log_event(
                         "rag.retry_done",
                         answer_preview=answer_2[:400] + ("..." if len(answer_2) > 400 else ""),

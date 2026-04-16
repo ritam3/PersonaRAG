@@ -1,0 +1,1056 @@
+[
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/rag-pdf-qa-method",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Rag Pdf Qa Method",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide a PDF and ask specific questions to the LLM based on the pdf content. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "RAG-PDF QA Method - January 2025",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/rag-pdf-qa-method",
+      "section_header": "RAG-PDF QA Method -",
+      "section_label": "RAG-PDF QA Method -",
+      "section_type": "project_detail",
+      "section_scope": "rag-pdf_qa_method_-",
+      "Header 1": "RAG-PDF QA Method -",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Rag Pdf Qa Method",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide a PDF and ask specific questions to the LLM based on the pdf content. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview This project aimed to build an interface so that user could provide a PDF and ask specific questions to the LLM based on the pdf content. The LLM also indicated the paragraphs and texts that led to the answer that it provided. This reduced the chances of hallucinations by the model. https://github.com/ritam3/RAG-PDF-HuggingFace-Groq/tree/main",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/rag-pdf-qa-method",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "RAG-PDF QA Method -",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Rag Pdf Qa Method",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide a PDF and ask specific questions to the LLM based on the pdf content. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights Parsing of PDF Document: Supports parsing and preprocessing PDF documents for QA. Parsing of PDF Document: Supports parsing and preprocessing PDF documents for QA. HuggingFace Embeddings: Used HuggingFace models to generate embeddings for document text. HuggingFace Embeddings: Used HuggingFace models to generate embeddings for document text. Groq API Integration: Used Groq API for embedding retrieval and similarity search. Groq API Integration: Used Groq API for embedding retrieval and similarity search. Session Management: Maintains session state so redundant calculations of embeddings can be avoided; hence, it will be more efficient. Session Management: Maintains session state so redundant calculations of embeddings can be avoided; hence, it will be more efficient. Interactive QA: It allows users to ask queries after uploading documents. It retrieves relevant information from the processed PDFs. Interactive QA: It allows users to ask queries after uploading documents. It retrieves relevant information from the processed PDFs.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/rag-pdf-qa-method",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "RAG-PDF QA Method -",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Rag Pdf Qa Method",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide a PDF and ask specific questions to the LLM based on the pdf content. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 \"Forecasting the Future: Utilizing LSTM for Next-Word Prediction in Natural Language Processing.\" December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/rag-pdf-qa-method",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "RAG-PDF QA Method -",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Rag Pdf Qa Method",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide a PDF and ask specific questions to the LLM based on the pdf content. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/stack",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "general",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "stack",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Stack Tech-Stack I am familiar with Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/stack",
+      "section_header": "Stack",
+      "section_label": "Stack",
+      "section_type": "skills",
+      "section_scope": "stack",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Stack",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "stack",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/churn-prediction-and-customer-cohort",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Churn Prediction And Customer Cohort",
+      "page_summary": "Project Overview This project pinpointed those users on the Paytm Money platform that were active the previous month but were predicted to churn in the upcoming month. Insights helped marketing and growth teams proactively target these users and implement retention strategies.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Churn Prediction and Customer Cohort - October 2023 Paytm Money",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/churn-prediction-and-customer-cohort",
+      "section_header": "Churn Prediction and Customer Cohort -",
+      "section_label": "Churn Prediction and Customer Cohort -",
+      "section_type": "project_detail",
+      "section_scope": "churn_prediction_and_customer_cohort_-",
+      "Header 1": "Churn Prediction and Customer Cohort -",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Churn Prediction And Customer Cohort",
+      "page_summary": "Project Overview This project pinpointed those users on the Paytm Money platform that were active the previous month but were predicted to churn in the upcoming month. Insights helped marketing and growth teams proactively target these users and implement retention strategies.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview This project pinpointed those users on the Paytm Money platform that were active the previous month but were predicted to churn in the upcoming month. Insights helped marketing and growth teams proactively target these users and implement retention strategies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/churn-prediction-and-customer-cohort",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "Churn Prediction and Customer Cohort -",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Churn Prediction And Customer Cohort",
+      "page_summary": "Project Overview This project pinpointed those users on the Paytm Money platform that were active the previous month but were predicted to churn in the upcoming month. Insights helped marketing and growth teams proactively target these users and implement retention strategies.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights To identify the users who traded in the platform the previous month but are likely to churn for the current month to assist the marketing and growth team targets the users and plans. To identify the users who traded in the platform the previous month but are likely to churn for the current month to assist the marketing and growth team targets the users and plans. Used Python to implement clustering techniques like KNN and DB-SCAN to create cohorts of users that helped to segment the user based on trading habits. Used Python to implement clustering techniques like KNN and DB-SCAN to create cohorts of users that helped to segment the user based on trading habits. ML methods like Random Forests, Gradient Boosting, and Deep Neural Networks were used to predict and identify the churned users with a Recall of 88% and Precision of 70%. ML methods like Random Forests, Gradient Boosting, and Deep Neural Networks were used to predict and identify the churned users with a Recall of 88% and Precision of 70%.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/churn-prediction-and-customer-cohort",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "Churn Prediction and Customer Cohort -",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Churn Prediction And Customer Cohort",
+      "page_summary": "Project Overview This project pinpointed those users on the Paytm Money platform that were active the previous month but were predicted to churn in the upcoming month. Insights helped marketing and growth teams proactively target these users and implement retention strategies.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/churn-prediction-and-customer-cohort",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "Churn Prediction and Customer Cohort -",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Churn Prediction And Customer Cohort",
+      "page_summary": "Project Overview This project pinpointed those users on the Paytm Money platform that were active the previous month but were predicted to churn in the upcoming month. Insights helped marketing and growth teams proactively target these users and implement retention strategies.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/ai-based-name-matcher",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Ai Based Name Matcher",
+      "page_summary": "Project Overview Fin-tech industries use a method called penny-drop to verify bank account numbers mentioned by users by crediting Re 1 to the account number and obtaining the name associated with the account number. This helps to find if the account number that the user mentioned belongs to him.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "AI based Name Matcher - Matching 2 Indian Names to match the similarity March 2022 Paytm Money",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/ai-based-name-matcher",
+      "section_header": "AI based Name Matcher - Matching 2 Indian Names to match the similarity",
+      "section_label": "AI based Name Matcher - Matching 2 Indian Names to match the similarity",
+      "section_type": "project_detail",
+      "section_scope": "ai_based_name_matcher_-_matching_2_indian_names_to_match_the_similarity",
+      "Header 1": "AI based Name Matcher - Matching 2 Indian Names to match the similarity",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Ai Based Name Matcher",
+      "page_summary": "Project Overview Fin-tech industries use a method called penny-drop to verify bank account numbers mentioned by users by crediting Re 1 to the account number and obtaining the name associated with the account number. This helps to find if the account number that the user mentioned belongs to him.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview Fin-tech industries use a method called penny-drop to verify bank account numbers mentioned by users by crediting Re 1 to the account number and obtaining the name associated with the account number. This helps to find if the account number that the user mentioned belongs to him.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/ai-based-name-matcher",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "AI based Name Matcher - Matching 2 Indian Names to match the similarity",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Ai Based Name Matcher",
+      "page_summary": "Project Overview Fin-tech industries use a method called penny-drop to verify bank account numbers mentioned by users by crediting Re 1 to the account number and obtaining the name associated with the account number. This helps to find if the account number that the user mentioned belongs to him.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights The account holder name obtained by crediting Re 1 is matched with the name mentioned in the PAN of the user to confirm if the bank account belongs to the user. The account holder name obtained by crediting Re 1 is matched with the name mentioned in the PAN of the user to confirm if the bank account belongs to the user. AI-based Name Matcher uses the Random Forest model to calculate the similarity based on both phonetic and distance specially trained on Indian names. AI-based Name Matcher uses the Random Forest model to calculate the similarity based on both phonetic and distance specially trained on Indian names. Used Python to preprocess the data and train the ML model. Used Python to preprocess the data and train the ML model. The acceptance went from 70% to 80% compared to the algorithmic name-matcher used prior. The acceptance went from 70% to 80% compared to the algorithmic name-matcher used prior.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/ai-based-name-matcher",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "AI based Name Matcher - Matching 2 Indian Names to match the similarity",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Ai Based Name Matcher",
+      "page_summary": "Project Overview Fin-tech industries use a method called penny-drop to verify bank account numbers mentioned by users by crediting Re 1 to the account number and obtaining the name associated with the account number. This helps to find if the account number that the user mentioned belongs to him.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/ai-based-name-matcher",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "AI based Name Matcher - Matching 2 Indian Names to match the similarity",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Ai Based Name Matcher",
+      "page_summary": "Project Overview Fin-tech industries use a method called penny-drop to verify bank account numbers mentioned by users by crediting Re 1 to the account number and obtaining the name associated with the account number. This helps to find if the account number that the user mentioned belongs to him.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "project_detail",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "My Latest Works PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 \"Forecasting the Future: Utilizing LSTM for Next-Word Prediction in Natural Language Processing.\" December 2024 Development of a Machine Learning Model that takes user's activity data as input and predicts if the user is going to churn October 2023 Use image processing and deep learning to alert users at the frontend that their photos might be rejected in the backend as their photo do not meet the requirements such as lighting, eyes properly visible, no spoof and properly clothed. September 2023 Development of models that extract parameters like account number, ifsc, date, name, duration and so on and matches them with the requirements to accept or reject the account statement as a bank or income proof October 2022 Development of Machine Learning Model that predicts similarity between 2 names trained on data collected for indian names. March 2022 A KUKA robot was automated using a simple camera that enabled to locate, localize, identify the pose and feed the coordinates to robot in order to grisp it. Image processing techniques and deep learning methods were used recognize the object and PnP model was used to find the pose for a perfect grasp. July 2021 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project",
+      "section_header": "My Latest Works",
+      "section_label": "My Latest Works",
+      "section_type": "project_detail",
+      "section_scope": "my_latest_works",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "My Latest Works",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "project_detail",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/low-cost-vision-based-gripper",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Low Cost Vision Based Gripper",
+      "page_summary": "Project Overview This project focused on automating object detection and grasping for a KUKA robot in an assembly line. The objective was to identify whether an object was cylindrical or cuboid to select the appropriate gripper type (three-fingered for cylindrical objects, parallel plate for cuboids).",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Low Cost Vision-Based Gripper - Camera based gripper to locate, localize and grasp object July 2021 Centre of Excellence in Advanced Manufacturing Technology, IIT Kharagpur",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/low-cost-vision-based-gripper",
+      "section_header": "Low Cost Vision-Based Gripper - Camera based gripper to locate, localize and grasp object",
+      "section_label": "Low Cost Vision-Based Gripper - Camera based gripper to locate, localize and grasp object",
+      "section_type": "project_detail",
+      "section_scope": "low_cost_vision-based_gripper_-_camera_based_gripper_to_locate,_localize_and_grasp_object",
+      "Header 1": "Low Cost Vision-Based Gripper - Camera based gripper to locate, localize and grasp object",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Low Cost Vision Based Gripper",
+      "page_summary": "Project Overview This project focused on automating object detection and grasping for a KUKA robot in an assembly line. The objective was to identify whether an object was cylindrical or cuboid to select the appropriate gripper type (three-fingered for cylindrical objects, parallel plate for cuboids).",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview This project focused on automating object detection and grasping for a KUKA robot in an assembly line. The objective was to identify whether an object was cylindrical or cuboid to select the appropriate gripper type (three-fingered for cylindrical objects, parallel plate for cuboids). YOLOv4 was used to identify the cuboid and cylindrical objects. Watch the video : https://www.youtube.com/watch?v=g1MSxzrRrLM",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/low-cost-vision-based-gripper",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "Low Cost Vision-Based Gripper - Camera based gripper to locate, localize and grasp object",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Low Cost Vision Based Gripper",
+      "page_summary": "Project Overview This project focused on automating object detection and grasping for a KUKA robot in an assembly line. The objective was to identify whether an object was cylindrical or cuboid to select the appropriate gripper type (three-fingered for cylindrical objects, parallel plate for cuboids).",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights To pick up an object, it is essential to find whether the object is cylindrical or cuboid so that the appropriate gripper is used for grasping. The three-fingered gripper is generally used for cylindrical surfaces whereas parallel plate grippers are used for cuboids. To pick up an object, it is essential to find whether the object is cylindrical or cuboid so that the appropriate gripper is used for grasping. The three-fingered gripper is generally used for cylindrical surfaces whereas parallel plate grippers are used for cuboids. YOLOv4 was used for object detection and to differentiate between cylindrical and cuboid. YOLOv4 was used for object detection and to differentiate between cylindrical and cuboid. In addition, the vertices of a cuboid were found using segmentation of the object and it was used to estimate pose of the cuboid. OpenCV was used to perform segmentation and automate the KUKA robot. In addition, the vertices of a cuboid were found using segmentation of the object and it was used to estimate pose of the cuboid. OpenCV was used to perform segmentation and automate the KUKA robot. The camera mounted on top of the KUKA robot, aided in calculating the position and the pose for perfect grasp. The camera mounted on top of the KUKA robot, aided in calculating the position and the pose for perfect grasp. Used Python to connect the KUKA robot controllers through the cloud to feed the 6D coordinates and automate the process in an assembly line. Used Python to connect the KUKA robot controllers through the cloud to feed the 6D coordinates and automate the process in an assembly line.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/low-cost-vision-based-gripper",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "Low Cost Vision-Based Gripper - Camera based gripper to locate, localize and grasp object",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Low Cost Vision Based Gripper",
+      "page_summary": "Project Overview This project focused on automating object detection and grasping for a KUKA robot in an assembly line. The objective was to identify whether an object was cylindrical or cuboid to select the appropriate gripper type (three-fingered for cylindrical objects, parallel plate for cuboids).",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/low-cost-vision-based-gripper",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "Low Cost Vision-Based Gripper - Camera based gripper to locate, localize and grasp object",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Low Cost Vision Based Gripper",
+      "page_summary": "Project Overview This project focused on automating object detection and grasping for a KUKA robot in an assembly line. The objective was to identify whether an object was cylindrical or cuboid to select the appropriate gripper type (three-fingered for cylindrical objects, parallel plate for cuboids).",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/next-word",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Next Word",
+      "page_summary": "Project Overview The prediction of the next word, using LSTM, is to guess the next word in a sentence. LSTM is a particular kind of neural network that remembers word context.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Next Word - Next Word Prediction December 2024",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/next-word",
+      "section_header": "Next Word - Next Word Prediction",
+      "section_label": "Next Word - Next Word Prediction",
+      "section_type": "project_detail",
+      "section_scope": "next_word_-_next_word_prediction",
+      "Header 1": "Next Word - Next Word Prediction",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Next Word",
+      "page_summary": "Project Overview The prediction of the next word, using LSTM, is to guess the next word in a sentence. LSTM is a particular kind of neural network that remembers word context.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview The prediction of the next word, using LSTM, is to guess the next word in a sentence. LSTM is a particular kind of neural network that remembers word context. This makes it very good for applications like text suggestions, chatbots, or writing assistants. The model predicts the next word by analyzing the words provided so far; this helps make typing faster and interactions smoother. https://github.com/ritam3/Next_Word",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/next-word",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "Next Word - Next Word Prediction",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Next Word",
+      "page_summary": "Project Overview The prediction of the next word, using LSTM, is to guess the next word in a sentence. LSTM is a particular kind of neural network that remembers word context.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights Used the \"Adventures of Sherlock Holmes\" dataset to train the LSTM model. Used the \"Adventures of Sherlock Holmes\" dataset to train the LSTM model. The data was cleaned and tokenized and the final data was generated using the n-gram method. The data was cleaned and tokenized and the final data was generated using the n-gram method. The model was built using TensorFlow. The model was built using TensorFlow. User Interface was built using Streamlit. User Interface was built using Streamlit.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/next-word",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "Next Word - Next Word Prediction",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Next Word",
+      "page_summary": "Project Overview The prediction of the next word, using LSTM, is to guess the next word in a sentence. LSTM is a particular kind of neural network that remembers word context.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/next-word",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "Next Word - Next Word Prediction",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Next Word",
+      "page_summary": "Project Overview The prediction of the next word, using LSTM, is to guess the next word in a sentence. LSTM is a particular kind of neural network that remembers word context.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/llm-based-q-a-on-web-context",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Llm Based Q A On Web Context",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide an URL and ask specific questions to the LLM based on that webpage where the URL leads. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "LLM Based Q/A on Web Context - LLM Q/A based on OLLAMA December 2024",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/llm-based-q-a-on-web-context",
+      "section_header": "LLM Based Q/A on Web Context - LLM Q/A based on OLLAMA",
+      "section_label": "LLM Based Q/A on Web Context - LLM Q/A based on OLLAMA",
+      "section_type": "project_detail",
+      "section_scope": "llm_based_q/a_on_web_context_-_llm_q/a_based_on_ollama",
+      "Header 1": "LLM Based Q/A on Web Context - LLM Q/A based on OLLAMA",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Llm Based Q A On Web Context",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide an URL and ask specific questions to the LLM based on that webpage where the URL leads. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview This project aimed to build an interface so that user could provide an URL and ask specific questions to the LLM based on that webpage where the URL leads. The LLM also indicated the paragraphs and texts that led to the answer that it provided. This reduced the chances of hallucinations by the model. The user could also see the answer the model gave based on its own knowledge and could choose the one that suited him the most. https://github.com/ritam3/LLM-Based-Q-A-based-on-Web-Context",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/llm-based-q-a-on-web-context",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "LLM Based Q/A on Web Context - LLM Q/A based on OLLAMA",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Llm Based Q A On Web Context",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide an URL and ask specific questions to the LLM based on that webpage where the URL leads. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights Used Langchain to work with LLMs and loading web based data, splitting text and converting them into documents. Used Langchain to work with LLMs and loading web based data, splitting text and converting them into documents. FAISS to store the encodings. FAISS to store the encodings. Worked with OLLAMA to include models like LLAMA 3.2 and Gemma:2b. Worked with OLLAMA to include models like LLAMA 3.2 and Gemma:2b. Used Streamlit to build the User Interface. Used Streamlit to build the User Interface. User was given the ability to ask a question and the chosen LLM model returned the answer based on web context and its own knowledge. User was given the ability to ask a question and the chosen LLM model returned the answer based on web context and its own knowledge.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/llm-based-q-a-on-web-context",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "LLM Based Q/A on Web Context - LLM Q/A based on OLLAMA",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Llm Based Q A On Web Context",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide an URL and ask specific questions to the LLM based on that webpage where the URL leads. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 \"Forecasting the Future: Utilizing LSTM for Next-Word Prediction in Natural Language Processing.\" December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/llm-based-q-a-on-web-context",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "LLM Based Q/A on Web Context - LLM Q/A based on OLLAMA",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Llm Based Q A On Web Context",
+      "page_summary": "Project Overview This project aimed to build an interface so that user could provide an URL and ask specific questions to the LLM based on that webpage where the URL leads. The LLM also indicated the paragraphs and texts that led to the answer that it provided.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/improper-face-detection-at-frontend",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Improper Face Detection At Frontend",
+      "page_summary": "Project Overview The users had to upload a selfie to open a trading account with Paytm Money. That photo had to match their ID uploaded earlier.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Improper Face Detection at Frontend - Finding faces that do not meet requirements September 2023 Paytm Money",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/improper-face-detection-at-frontend",
+      "section_header": "Improper Face Detection at Frontend - Finding faces that do not meet requirements",
+      "section_label": "Improper Face Detection at Frontend - Finding faces that do not meet requirements",
+      "section_type": "project_detail",
+      "section_scope": "improper_face_detection_at_frontend_-_finding_faces_that_do_not_meet_requirements",
+      "Header 1": "Improper Face Detection at Frontend - Finding faces that do not meet requirements",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Improper Face Detection At Frontend",
+      "page_summary": "Project Overview The users had to upload a selfie to open a trading account with Paytm Money. That photo had to match their ID uploaded earlier.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview The users had to upload a selfie to open a trading account with Paytm Money. That photo had to match their ID uploaded earlier. The main job was to prompt users that the selfie clicked did not match the requirements and that the user should upload a new image to reduce his onboarding time.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/improper-face-detection-at-frontend",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "Improper Face Detection at Frontend - Finding faces that do not meet requirements",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Improper Face Detection At Frontend",
+      "page_summary": "Project Overview The users had to upload a selfie to open a trading account with Paytm Money. That photo had to match their ID uploaded earlier.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights To alert the users who upload improper photos of their faces during the onboarding process with mentioned guidelines regarding the quality of the photo such as brightness, contrast, face too close to boundaries, face is spoofed, user not wearing a proper shirt, etc. To alert the users who upload improper photos of their faces during the onboarding process with mentioned guidelines regarding the quality of the photo such as brightness, contrast, face too close to boundaries, face is spoofed, user not wearing a proper shirt, etc. Used ML models and image processing techniques for filters, reducing the photo rejection at the backend by 5%. Used ML models and image processing techniques for filters, reducing the photo rejection at the backend by 5%. Used Python and FastAPI to create RESTful API for checks. Used Python and FastAPI to create RESTful API for checks.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/improper-face-detection-at-frontend",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "Improper Face Detection at Frontend - Finding faces that do not meet requirements",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Improper Face Detection At Frontend",
+      "page_summary": "Project Overview The users had to upload a selfie to open a trading account with Paytm Money. That photo had to match their ID uploaded earlier.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/improper-face-detection-at-frontend",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "Improper Face Detection at Frontend - Finding faces that do not meet requirements",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Improper Face Detection At Frontend",
+      "page_summary": "Project Overview The users had to upload a selfie to open a trading account with Paytm Money. That photo had to match their ID uploaded earlier.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/account-statement-verification",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Account Statement Verification",
+      "page_summary": "Project Overview Users had to upload their account statements as bank proof or income proof to open a trading account with Paytm Money. We devised various methods using OCR and text extraction to find parameters like account number, ifsc-code, name, duration, closing balance, and so on to verify the document.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Account Statement Verification - October 2022 Paytm Money",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/account-statement-verification",
+      "section_header": "Account Statement Verification -",
+      "section_label": "Account Statement Verification -",
+      "section_type": "project_detail",
+      "section_scope": "account_statement_verification_-",
+      "Header 1": "Account Statement Verification -",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Account Statement Verification",
+      "page_summary": "Project Overview Users had to upload their account statements as bank proof or income proof to open a trading account with Paytm Money. We devised various methods using OCR and text extraction to find parameters like account number, ifsc-code, name, duration, closing balance, and so on to verify the document.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview Users had to upload their account statements as bank proof or income proof to open a trading account with Paytm Money. We devised various methods using OCR and text extraction to find parameters like account number, ifsc-code, name, duration, closing balance, and so on to verify the document.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/account-statement-verification",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "Account Statement Verification -",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Account Statement Verification",
+      "page_summary": "Project Overview Users had to upload their account statements as bank proof or income proof to open a trading account with Paytm Money. We devised various methods using OCR and text extraction to find parameters like account number, ifsc-code, name, duration, closing balance, and so on to verify the document.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights Analyzed account statement PDFs and patterns to extract account number, IFSC, date, and name to match it with the details confirmed by the user. Analyzed account statement PDFs and patterns to extract account number, IFSC, date, and name to match it with the details confirmed by the user. Data mining methods were used to extract fields crucial to validate the statements uploaded by users as bank and income proofs. Data mining methods were used to extract fields crucial to validate the statements uploaded by users as bank and income proofs. Using data mining methods, I spear headed the automation of verification for the bank proof upload at 40%. Using data mining methods, I spear headed the automation of verification for the bank proof upload at 40%. Trained a CNN model using Python and Tensorflow to identify account statements based on visual characteristics. Trained a CNN model using Python and Tensorflow to identify account statements based on visual characteristics. Used Python and FastAPI to create RESTful API for checks. Used Python and FastAPI to create RESTful API for checks.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/account-statement-verification",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "Account Statement Verification -",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Account Statement Verification",
+      "page_summary": "Project Overview Users had to upload their account statements as bank proof or income proof to open a trading account with Paytm Money. We devised various methods using OCR and text extraction to find parameters like account number, ifsc-code, name, duration, closing balance, and so on to verify the document.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/account-statement-verification",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "Account Statement Verification -",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Account Statement Verification",
+      "page_summary": "Project Overview Users had to upload their account statements as bank proof or income proof to open a trading account with Paytm Money. We devised various methods using OCR and text extraction to find parameters like account number, ifsc-code, name, duration, closing balance, and so on to verify the document.",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/personarag",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "project_detail",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Personarag",
+      "page_summary": "Project Overview Iâve developed a \"digital twin\" RAG chatbot that answers portfolio queries using a FAISS index optimized for retrieving full content blocks rather than fragments. The pipeline ensures conversational continuity by rewriting multi-turn prompts into standalone questions and maintains high reliability...",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin January 2026",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/personarag",
+      "section_header": "PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin",
+      "section_label": "PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin",
+      "section_type": "project_detail",
+      "section_scope": "personarag_-_a_conversation-aware,_self-correcting_ai_twin",
+      "Header 1": "PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin",
+      "Header 2": "",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Personarag",
+      "page_summary": "Project Overview Iâve developed a \"digital twin\" RAG chatbot that answers portfolio queries using a FAISS index optimized for retrieving full content blocks rather than fragments. The pipeline ensures conversational continuity by rewriting multi-turn prompts into standalone questions and maintains high reliability...",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Project Overview Iâve developed a \"digital twin\" RAG chatbot that answers portfolio queries using a FAISS index optimized for retrieving full content blocks rather than fragments. The pipeline ensures conversational continuity by rewriting multi-turn prompts into standalone questions and maintains high reliability through an LLM-as-judge evaluator that triggers bounded self-correction to prevent hallucinations. To stay current, the system automatically re-indexes my website daily, ensuring all responses are grounded in my latest professional data. https://huggingface.co/spaces/ritup3/PersonaRag",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/personarag",
+      "section_header": "Project Overview",
+      "section_label": "Project Overview",
+      "section_type": "project_overview",
+      "section_scope": "project_overview",
+      "Header 1": "PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin",
+      "Header 2": "Project Overview",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Personarag",
+      "page_summary": "Project Overview Iâve developed a \"digital twin\" RAG chatbot that answers portfolio queries using a FAISS index optimized for retrieving full content blocks rather than fragments. The pipeline ensures conversational continuity by rewriting multi-turn prompts into standalone questions and maintains high reliability...",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Key Highlights Contextual Query Rewriting: Transforms conversational follow-ups into standalone, retrieval-ready questions using chat history. Contextual Query Rewriting: Transforms conversational follow-ups into standalone, retrieval-ready questions using chat history. Header-Based Chunking: Indexes documents by HTML headers ( H1 , H2 ) to retrieve complete sections (e.g., \"Work Experience\") rather than fragmented snippets. Header-Based Chunking: Indexes documents by HTML headers ( H1 , H2 ) to retrieve complete sections (e.g., \"Work Experience\") rather than fragmented snippets. Zero-Shot Section Routing: Uses a classifier (BART-MNLI) to map natural language queries to specific section labels, with vector search as a fallback. Zero-Shot Section Routing: Uses a classifier (BART-MNLI) to map natural language queries to specific section labels, with vector search as a fallback. Confidence-Ranked Retrieval: Prioritizes context based on routing confidence scores to minimize \"noise\" and improve LLM accuracy. Confidence-Ranked Retrieval: Prioritizes context based on routing confidence scores to minimize \"noise\" and improve LLM accuracy. Evaluator-Driven Self-Correction: Employs a judge model to score grounding; triggers a single feedback-guided retry if hallucinations are detected. Evaluator-Driven Self-Correction: Employs a judge model to score grounding; triggers a single feedback-guided retry if hallucinations are detected. Production Fault Tolerance: Implements comprehensive exception handling and safe fallbacks across all API-dependent steps to prevent crashes. Production Fault Tolerance: Implements comprehensive exception handling and safe fallbacks across all API-dependent steps to prevent crashes. Atomic Re-Indexing: Features a background scheduler that rebuilds and swaps the FAISS index daily for zero-downtime content updates. Atomic Re-Indexing: Features a background scheduler that rebuilds and swaps the FAISS index daily for zero-downtime content updates. Full-Stack Observability: Logs rewrites, metadata previews, and evaluator scores to simplify debugging and quality assurance. Full-Stack Observability: Logs rewrites, metadata previews, and evaluator scores to simplify debugging and quality assurance.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/personarag",
+      "section_header": "Key Highlights",
+      "section_label": "Key Highlights",
+      "section_type": "project_highlights",
+      "section_scope": "key_highlights",
+      "Header 1": "PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin",
+      "Header 2": "Key Highlights",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Personarag",
+      "page_summary": "Project Overview Iâve developed a \"digital twin\" RAG chatbot that answers portfolio queries using a FAISS index optimized for retrieving full content blocks rather than fragments. The pipeline ensures conversational continuity by rewriting multi-turn prompts into standalone questions and maintains high reliability...",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "More Project Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 \"Forecasting the Future: Utilizing LSTM for Next-Word Prediction in Natural Language Processing.\" December 2024 Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/project/personarag",
+      "section_header": "More Project",
+      "section_label": "More Project",
+      "section_type": "project_detail",
+      "section_scope": "more_project",
+      "Header 1": "PersonaRAG - A Conversation-Aware, Self-Correcting AI Twin",
+      "Header 2": "More Project",
+      "page_title": "More Project",
+      "page_type": "project_detail",
+      "project_name": "Personarag",
+      "page_summary": "Project Overview Iâve developed a \"digital twin\" RAG chatbot that answers portfolio queries using a FAISS index optimized for retrieving full content blocks rather than fragments. The pipeline ensures conversational continuity by rewriting multi-turn prompts into standalone questions and maintains high reliability...",
+      "planner_include": false
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "general",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "About Welcome to my portfolio! I am an ASU Master's student ('26) with experience at Juniper Networks and Paytm Money. I leverage ML/AI to solve complex business challenges, specializing in NLP, computer vision, and predictive analytics. Seeking roles in Data Science, AI/ML, and NLP to drive impact at scale. My projects Contact",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "About",
+      "section_label": "About",
+      "section_type": "general",
+      "section_scope": "about",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "About",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Contact ritam.upadhyay ritam3 rupadh17@asu.edu",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Contact",
+      "section_label": "Contact",
+      "section_type": "general",
+      "section_scope": "contact",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Contact",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Education 2018-2022 Birla Institute of Technology, Mesra 2024-2026 Arizona State University",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Education",
+      "section_label": "Education",
+      "section_type": "education",
+      "section_scope": "education",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Education",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Research Experience Developed a real-time deep learningâbased computer vision system for object detection, localization, and pose estimation in autonomous robotic applications. The proposed approach enables accurate grasping of cuboid and cylindrical objects without requiring prior 3D models, improving flexibility and reducing computational cost. Implemented the system on an industrial robotic setup with conveyor integration and dual grippers, achieving up to 89%+ detection precision and 100% grasping success in experiments, demonstrating effectiveness for smart manufacturing and Industry 4.0 environments. Co-authored an ACL submission introducing SPORTABSET, a diagnostic benchmark for long-context text-to-table generation from unstructured narratives. The work focuses on evaluating how well large language models maintain evolving multi-entity state across extended contexts by leveraging complementary domains (cricket and basketball) that require both multi-table coordination and wide-table aggregation. Conducted systematic evaluations of state-of-the-art LLMs using multiple prompting and decomposition strategies, and developed robustness analyses through perturbations such as entity substitution, anonymization, and entity entanglement to probe model reliance on surface cues versus true contextual reasoning.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Research Experience",
+      "section_label": "Research Experience",
+      "section_type": "experience",
+      "section_scope": "research_experience",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Research Experience",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Work experience January 2025 - Present CoRAL Lab - ASU â¢ Conducted research on NLP and large language models (LLMs) using rigorous experimental methodology; co-authored an ACL submission on long-context tabular summarization from unstructured narratives. â¢ Designed and evaluated a multi-sport diagnostic benchmark for structured table generation, analyzing multi-entity state tracking, memory interference, and long-context reasoning across state-of-the-art LLMs (GPT-4.1, Gemini-2.5, LLaMA-3.3, Qwen-2.5). â¢ Performed robustness and reliability analysis including perturbation testing, memorization probes, and end-to-end cost measurement (failure rates, regeneration overhead, token usage) to study trade-offs between accuracy, stability, and computational efficiency in decomposition-based methods. â¢ Worked on synthetic data generation based on agentic frameworks using CrewAI on Natural Language to SQL. June 2025 - August 2025 Juniper Networks / Mist â Engineered an end-to-end classification pipeline that processed over 13,000 customer support tickets, achieving a 100% automated classification rate and providing proactive insights into emerging issues. â Developed a multi-stage data processing module using LLMs to automatically extract and normalize critical information, including site, MAC address, and issue description, from raw Salesforce ticket data. â Implemented an advanced LLM-based analysis to parse support agent-customer conversations, automatically identifying root causes and agent actions, which helped streamline case resolution and improve the agent knowledge base. â Leveraged BERTopic on a dataset of over 13,000 \"complete issue\" data points to uncover 56 distinct, actionable topics and 728 subtopics, enabling the model to adapt to dynamic support trends without manual retraining. â Built and deployed a final classification model using Facebook BART to automatically route each ticket to the most relevant subtopic, ensuring every new ticket is assigned a precise classification from the unsupervised model's established categories. August 2022 - July 2024 Paytm Money â Developed machine learning models that ran 6000+ customer images per day in real-time to alert users regarding improper face uploads at the front end, increasing photo acceptance rate from 80% to 90%. â Created a machine learning model using XGBoost to predict and identify churned users in advance having 93% recall, and led marketing plan campaigns. â Devised CNN classifier for document recognition across 11 classes, achieving 97% precision and 92% accuracy. â Engineered scalable ML models that handle 20000+ calls per day from the backend and frontend, automating the KYC verification process and streamlining the onboarding journey for users. â Designed a K-Means clustering approach to segment 1.1M users according to investment habits in Mutual Funds. â Initiated statistics-based verification of account statements for Income and Bank Proof, automating 85% of account statement pdf uploads. January 2022 - July 2022 Paytm Money â Designed ML models to extract Period and Names from Account Statements with 95% precision. â Built ML model to perform similarity analysis using Random Forest Classifier with 98% precision. â Deployed models as Rest API using FastAPI for scaling. May 2020 - July 2021 Centre of Excellence in Advanced Manufacturing Technology, IIT Kharagpur â Performed literature survey to identify gripper selection and pose estimation for robotic grippers in assembly lines. â Created an AI-based system based on computer vision for job recognition to estimate object pose and coordinates with 100% accuracy to grasp on the test set. â Published Real Time Deep Learning-Based Image Processing for Pose Estimation and Object Localization in Autonomous Robot Applications, The International Journal of Advanced Manufacturing Technology, Springer.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Work experience",
+      "section_label": "Work experience",
+      "section_type": "experience",
+      "section_scope": "work_experience",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Work experience",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Projects January 2026 PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2025 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. December 2024 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 \"Forecasting the Future: Utilizing LSTM for Next-Word Prediction in Natural Language Processing.\" October 2023 Development of a Machine Learning Model that takes user's activity data as input and predicts if the user is going to churn September 2023 Use image processing and deep learning to alert users at the frontend that their photos might be rejected in the backend as their photo do not meet the requirements such as lighting, eyes properly visible, no spoof and properly clothed. October 2022 Development of models that extract parameters like account number, ifsc, date, name, duration and so on and matches them with the requirements to accept or reject the account statement as a bank or income proof March 2022 Development of Machine Learning Model that predicts similarity between 2 names trained on data collected for indian names. July 2021 A KUKA robot was automated using a simple camera that enabled to locate, localize, identify the pose and feed the coordinates to robot in order to grisp it. Image processing techniques and deep learning methods were used recognize the object and PnP model was used to find the pose for a perfect grasp.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Projects",
+      "section_label": "Projects",
+      "section_type": "projects",
+      "section_scope": "projects",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Projects",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Stack Software & services I use in my workflow. More",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Stack",
+      "section_label": "Stack",
+      "section_type": "skills",
+      "section_scope": "stack",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Stack",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Certifications June 2020 Neural Networks and Deep Learning June 2020 Improving Deep Neural Networks: Hyperparameter Tuning, Regularization and Optimization July 2024 Supervised Machine Learning: Regression and Classification Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/",
+      "section_header": "Certifications",
+      "section_label": "Certifications",
+      "section_type": "general",
+      "section_scope": "certifications",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "Certifications",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "landing",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work Back to homepage Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist...",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/old-home",
+      "section_header": "Ritam's Portfolio",
+      "section_label": "Ritam's Portfolio",
+      "section_type": "general",
+      "section_scope": "ritam's_portfolio",
+      "Header 1": "Ritam's Portfolio",
+      "Header 2": "",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "about",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Let's Transform Ideas into Reality Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Data Scientist Data Scientist Problem Solver Problem Solver Welcome to my portfolio! I am Ritam Upadhyay, passionate in the field of Data Science and Artificial Intelligence. I have 2 years of work experience in the field of Data Science at Paytm and I am currently pursuing my Master's in Data Science from Arizona State University. More about me Contact",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/old-home",
+      "section_header": "Let's Transform Ideas into Reality",
+      "section_label": "Let's Transform Ideas into Reality",
+      "section_type": "general",
+      "section_scope": "let's_transform_ideas_into_reality",
+      "Header 1": "Let's Transform Ideas into Reality",
+      "Header 2": "",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "about",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "My Latest Works I present my top-tier projects, meticulously crafted with unwavering passion, simplicity, boundless creativity, and unparalleled attention to detail. PersonaRAG is a production-grade Retrieval-Augmented Generation (RAG) system that acts as a conversational AI twin of my professional profile. It answers questions about my experience, projects, research, and education in my own voice, grounded strictly in my resume and personal website. Unlike standard RAG pipelines, PersonaRAG is optimized for multi-turn conversations and resume-style content, where users expect complete sections (e.g., âWork Experienceâ) and coherent follow-ups rather than isolated text snippets. January 2026 Implementation of RAG method to perform question answering on PDF documents. HuggingFace embeddings in addition to the Groq API were used for efficient and accurate information retrieval. Session management was done to ensure embeddings are computed once per document upload to optimize performance by avoiding redundant computations. January 2025 Development of Web App that uses open source LLMs to answer user queries based on its own knowledge as well as any reference provided in the form of external webpages. December 2024 All project",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/old-home",
+      "section_header": "My Latest Works",
+      "section_label": "My Latest Works",
+      "section_type": "general",
+      "section_scope": "my_latest_works",
+      "Header 1": "Let's Transform Ideas into Reality",
+      "Header 2": "My Latest Works",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "about",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+      "planner_include": true
+    }
+  },
+  {
+    "text": "Stack Tech Stack I am familiar with More Main Home About Project Stack rupadh17@asu.edu Linkedin Main Home About Project Stack rupadh17@asu.edu Linkedin Create a free website with Framer, the website builder loved by startups, designers and agencies.",
+    "metadata": {
+      "source": "https://fearless-writers-028990.framer.app/old-home",
+      "section_header": "Stack",
+      "section_label": "Stack",
+      "section_type": "skills",
+      "section_scope": "stack",
+      "Header 1": "Let's Transform Ideas into Reality",
+      "Header 2": "Stack",
+      "page_title": "Ritam's Portfolio",
+      "page_type": "about",
+      "project_name": "",
+      "page_summary": "Ritam's Portfolio Ritam Upadhyay Data Scientist Home About Projects Stacks Search Menu Available for work",
+      "planner_include": true
+    }
+  }
+]
