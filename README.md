@@ -12,6 +12,8 @@ pinned: false
 
 # PersonaRag
 
+Live App: https://huggingface.co/spaces/ritup3/PersonaRag
+
 PersonaRag is a production-oriented personal RAG assistant that turns a portfolio website, project pages, and career materials into a conversational digital twin. It is designed to answer recruiter, hiring manager, and collaborator questions about Ritam's experience, projects, research, education, and technical depth in a grounded, retrieval-backed way.
 
 The system is not a generic chatbot wrapped around an LLM. It is a retrieval pipeline built to do three things well:
